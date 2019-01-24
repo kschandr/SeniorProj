@@ -21,20 +21,7 @@ def showSignUp():
 
 @app.route("/")
 def main():
-    #return render_template('index.html')
-    _name = 'inputName'
-    _email = 'inputEmail'
-    _password = 'pp'
-
-    #sql stuff
-    conn = mysql.connect()
-    cursor = conn.cursor()
-    #_hashed_password = generate_password_hash(_password)
-    cursor.callproc('sp_createUser',(_name,_email,_password))
-    data = cursor.fetchall()
-
-    if len(data) is 0:
-        conn.commit()
+    return render_template('index.html')
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
