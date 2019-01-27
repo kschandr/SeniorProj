@@ -1,5 +1,5 @@
-from flask import Flask, render_template,json,request
-from flask.ext.mysql import MySQL
+from flask import Flask, render_template,json,request, redirect, url_for
+from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -13,6 +13,44 @@ app.config['MYSQL_DATABASE_HOST'] = 'ambari-head.csc.calpoly.edu'
 mysql.init_app(app)
 
 
+#@app.route("/home/<user>")
+#def homePage(user):
+#    return render_template('home.html', user=user)
+
+@app.route("/home")
+def homePage():
+    return render_template('home.html')
+
+
+@app.route("/showSignIn")
+def showSignIn():
+  return render_template('signin.html')
+
+@app.route('/signIn')
+def signIn():
+
+    # read the posted values from the UI
+    _name = request.form['inputName']
+    _password = request.form['inputPassword']
+
+
+    # validate the received values
+    if _name and _password:
+        #sql stuff
+        conn = mysql.connect()
+        cursor = conn.cursor()
+
+        #_hashed_password = generate_password_hash(_password)
+        cursor.callproc('sp_loginUser',(_name,_password))
+        data = cursor.fetchall()
+
+        if len(data) is not 0:
+            return json.dumps({'error':str(data[0])})
+        else:
+            conn.commit()
+            return redirect('home')
+    else:
+        return json.dumps({'html':'<span>Enter the required fields</span>'})
 
 
 @app.route("/showSignUp")
@@ -20,6 +58,7 @@ def showSignUp():
   return render_template('signup.html')
 
 @app.route("/")
+@app.route("/main")
 def main():
     return render_template('index.html')
 
@@ -37,17 +76,18 @@ def signUp():
         #sql stuff
         conn = mysql.connect()
         cursor = conn.cursor()
-        _hashed_password = generate_password_hash(_password)
-        cursor.callproc('sp_createUser',(_name,_email,_hashed_password))
+        #_hashed_password = generate_password_hash(_password)
+        cursor.callproc('sp_createUser',(_name,_email,_password))
         data = cursor.fetchall()
 
         if len(data) is 0:
             conn.commit()
-            return json.dumps({'message':'User created successfully !'})
+            return redirect('home')
         else:
             return json.dumps({'error':str(data[0])})
     else:
         return json.dumps({'html':'<span>Enter the required fields</span>'})
+
 
 if __name__ == "__main__":
     app.run()
