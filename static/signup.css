@@ -3,6 +3,11 @@ body {
   padding-bottom: 40px;
 }
 
+li{
+    display:inline;
+    padding: 10px 40px;
+}
+
 .form-signin {
   max-width: 330px;
   padding: 15px;
