@@ -1,6 +1,8 @@
+import logging
 from flask import Flask, render_template,json,request, redirect, url_for
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
+
 
 app = Flask(__name__)
 mysql = MySQL()
@@ -31,6 +33,8 @@ def signIn():
 
 		# read the posted values from the UI
 		_name = request.form['inputName']
+		app.logger.info("!!!!$$This is the input name %s", _name)
+		app.logger.info("input name len %d", len(_name))
 		_password = request.form['inputPassword']
 
 
@@ -40,15 +44,16 @@ def signIn():
 				conn = mysql.connect()
 				cursor = conn.cursor()
 
-				#_hashed_password = generate_password_hash(_password)
-				cursor.callproc('sp_loginUser',(_name,_password))
+				_hashed_password = generate_password_hash(_password)
+				cursor.callproc('sp_loginUser',([_name]))
 				data = cursor.fetchall()
 
-				if len(data) is not 0:
+
+				if not check_password_hash(data, _password):
 						return json.dumps({'error':str(data[0])})
 				else:
 						conn.commit()
-						return redirect(url_for('showSuccess'))
+						return redirect('success')
 		else:
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
 
@@ -79,13 +84,13 @@ def signUp():
 				#sql stuff
 				conn = mysql.connect()
 				cursor = conn.cursor()
-				#_hashed_password = generate_password_hash(_password)
+				_hashed_password = generate_password_hash(_password)
 				cursor.callproc('sp_createUser',(_name,_email,_password))
 				data = cursor.fetchall()
 
 				if len(data) is 0:
 						conn.commit()
-						return redirect(url_for('showSuccess'))
+						return redirect('success')
 				else:
 						return json.dumps({'error':str(data[0])})
 		else:
