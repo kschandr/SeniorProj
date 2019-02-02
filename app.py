@@ -19,6 +19,34 @@ mysql.init_app(app)
 #def homePage(user):
 #    return render_template('home.html', user=user)
 
+
+
+@app.route("/nutrition")
+def showNutrition():
+	return render_template('nutrition.html')
+
+@app.route("/workout")
+def showWorkout():
+	return render_template('workout.html')
+
+@app.route("/news")
+def showNews():
+	return render_template('news.html')
+
+@app.route("/goals")
+def showGoals():
+	return render_template('goals.html')
+
+@app.route("/profile")
+def showProfile():
+	return render_template('profile.html')
+
+@app.route("/friends")
+def showFriends():
+	return render_template('friends.html')
+
+
+@app.route("/success")
 @app.route("/home")
 def homePage():
 		return render_template('home.html')
@@ -53,13 +81,10 @@ def signIn():
 						return json.dumps({'error':str(data[0])})
 				else:
 						conn.commit()
-						return redirect('success')
+						return redirect('home')
 		else:
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
 
-@app.route("/success")
-def showSuccess():
-	return render_template('success.html')
 
 @app.route("/showSignUp")
 def showSignUp():
@@ -90,7 +115,7 @@ def signUp():
 
 				if len(data) is 0:
 						conn.commit()
-						return redirect('success')
+						return redirect('home')
 				else:
 						return json.dumps({'error':str(data[0])})
 		else:

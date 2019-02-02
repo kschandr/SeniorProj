@@ -7,7 +7,7 @@ $(function() {
             type: 'POST',
             success: function(response) {
                 //console.log(response);
-                window.location.href = "success"
+                window.location.href = "home"
             },
             error: function(error) {
                 console.log(error);
