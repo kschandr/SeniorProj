@@ -2,7 +2,9 @@ import logging
 from flask import Flask, render_template,json,request, redirect, url_for
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
-
+from subprocess import call
+import sys
+import myfitnesspal
 
 app = Flask(__name__)
 mysql = MySQL()
@@ -14,12 +16,14 @@ app.config['MYSQL_DATABASE_DB'] = 'kaysha'
 app.config['MYSQL_DATABASE_HOST'] = 'ambari-head.csc.calpoly.edu'
 mysql.init_app(app)
 
+#### VERY INSECURE LOL
+## Password is passed in as an argument (python app.py <your username> <your password> )
+#my_username = sys.argv[1]
+#password = sys.argv[2]
 
 #@app.route("/home/<user>")
 #def homePage(user):
 #    return render_template('home.html', user=user)
-
-
 
 @app.route("/nutrition")
 def showNutrition():
@@ -39,6 +43,9 @@ def showGoals():
 
 @app.route("/profile")
 def showProfile():
+
+
+
 	return render_template('profile.html')
 
 @app.route("/friends")
@@ -49,7 +56,15 @@ def showFriends():
 @app.route("/success")
 @app.route("/home")
 def homePage():
-		return render_template('home.html')
+		## info when we get out ability to create and input food
+		#user = request.cookies.get("logged_user")
+		app.logger.info("Getting client from MFP")
+		client = myfitnesspal.Client("Danz1ty")
+
+		## stores totals in calories, macros (dict form)
+		day_calories = client.get_date(2019,2,2).totals
+		#app.logger.info("user day calories: %d", day_calories)
+		return render_template('home.html', day_calories=day_calories)
 
 
 @app.route("/showSignIn")
@@ -103,19 +118,28 @@ def signUp():
 		_email = request.form['inputEmail']
 		_password = request.form['inputPassword']
 
-
 		# validate the received values
 		if _name and _email and _password:
 				#sql stuff
 				conn = mysql.connect()
 				cursor = conn.cursor()
 				_hashed_password = generate_password_hash(_password)
+
+				## save the username and hashed password into the myfitnesspal API
+				#call(["myfitnesspal", "store-password", _name])
+				#call(_hashed_password)
+
+
+				#save the user and password into the usr_tbl via sp_createUser stored proc.
 				cursor.callproc('sp_createUser',(_name,_email,_password))
 				data = cursor.fetchall()
 
 				if len(data) is 0:
 						conn.commit()
-						return redirect('home')
+						## set the user cookies
+						response = redirect('home')
+						response.set_cookie("logged_user", _name)
+						return response
 				else:
 						return json.dumps({'error':str(data[0])})
 		else:
