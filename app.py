@@ -1,10 +1,8 @@
-import logging
+import logging,sys, myfitnesspal,argparse
 from flask import Flask, render_template,json,request, redirect, url_for
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
-import sys
-import myfitnesspal
 
 app = Flask(__name__)
 mysql = MySQL()
@@ -16,10 +14,7 @@ app.config['MYSQL_DATABASE_DB'] = 'kaysha'
 app.config['MYSQL_DATABASE_HOST'] = 'ambari-head.csc.calpoly.edu'
 mysql.init_app(app)
 
-#### VERY INSECURE LOL
-## Password is passed in as an argument (python app.py <your username> <your password> )
-#my_username = sys.argv[1]
-#password = sys.argv[2]
+
 
 #@app.route("/home/<user>")
 #def homePage(user):
@@ -43,9 +38,6 @@ def showGoals():
 
 @app.route("/profile")
 def showProfile():
-
-
-
 	return render_template('profile.html')
 
 @app.route("/friends")
@@ -56,16 +48,15 @@ def showFriends():
 @app.route("/success")
 @app.route("/home")
 def homePage():
-		## info when we get out ability to create and input food
-		#user = request.cookies.get("logged_user")
-		app.logger.info("Getting client from MFP")
-		client = myfitnesspal.Client("Danz1ty")
 
+		## This is how you get the username
+		user = request.cookies.get("current_user")
+		app.logger.info(user)
 		## stores totals in calories, macros (dict form)
-		day_calories = client.get_date(2019,2,2).totals
+		#day_calories = client.get_date(2019,2,2).totals
 		#app.logger.info("user day calories: %d", day_calories)
-		return render_template('home.html', day_calories=day_calories)
-
+		#return render_template('home.html', day_calories=day_calories, user=user)
+		return render_template('home.html', user=user)
 
 @app.route("/showSignIn")
 def showSignIn():
@@ -77,7 +68,7 @@ def signIn():
 		# read the posted values from the UI
 		_name = request.form['inputName']
 		app.logger.info("!!!!$$This is the input name %s", _name)
-		app.logger.info("input name len %d", len(_name))
+		#app.logger.info("input name len %d", len(_name))
 		_password = request.form['inputPassword']
 
 
@@ -86,17 +77,20 @@ def signIn():
 				#sql stuff
 				conn = mysql.connect()
 				cursor = conn.cursor()
-
-				_hashed_password = generate_password_hash(_password)
+				#_hashed_password = generate_password_hash(_password)
 				cursor.callproc('sp_loginUser',([_name]))
 				data = cursor.fetchall()
-
-
 				if not check_password_hash(data, _password):
+						app.logger.error("not a match for password")
 						return json.dumps({'error':str(data[0])})
 				else:
 						conn.commit()
-						return redirect('home')
+						conn.close()
+						## set the user cookies
+						response = redirect('home')
+						response.set_cookie("current_user", _name)
+						app.logger.info("setting name cookie %s", _name)
+						return response
 		else:
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
 
@@ -125,11 +119,6 @@ def signUp():
 				cursor = conn.cursor()
 				_hashed_password = generate_password_hash(_password)
 
-				## save the username and hashed password into the myfitnesspal API
-				#call(["myfitnesspal", "store-password", _name])
-				#call(_hashed_password)
-
-
 				#save the user and password into the usr_tbl via sp_createUser stored proc.
 				cursor.callproc('sp_createUser',(_name,_email,_password))
 				data = cursor.fetchall()
@@ -137,8 +126,10 @@ def signUp():
 				if len(data) is 0:
 						conn.commit()
 						## set the user cookies
+						## we should probably comply to GDPR :P
 						response = redirect('home')
-						response.set_cookie("logged_user", _name)
+						response.set_cookie("current_user", _name)
+						app.logger.info("setting name cookie %s", request.cookies.get("current_user"))
 						return response
 				else:
 						return json.dumps({'error':str(data[0])})
@@ -147,4 +138,14 @@ def signUp():
 
 
 if __name__ == "__main__":
+		# parser = argparse.ArgumentParser(description='our fitness app.')
+		# parser.add_argument('MFP_username',
+		# 	help='your username for myfitnesspal')
+		# args = parser.parse_args()
+		# ## this next block would ideally be put into signup when we create users MFP accounts
+		# ## save the username and hashed password into the myfitnesspal API
+		# call(["myfitnesspal", "store-password", args.MFP_username])
+		# client = myfitnesspal.Client(args.MFP_username)
+
+
 		app.run(debug=True)
