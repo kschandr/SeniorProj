@@ -1,12 +1,12 @@
 to set up:
 ```
-git clone https://github.com/coddingtonbear/python-myfitnesspal.git
 cd python-myfitnesspal
 python setup.py install
 ```
 
-then set up your actual MFP account to the app.
-'myfitnesspal store-password <your username>'
+then set up your ACTUAL MFP account to the app.
+'python app.py <your username>'
 
-then input password at the prompt.
+Then input your password for myfitnesspal when prompted
+
 
