@@ -26,8 +26,8 @@ BEGIN
      
         insert into tbl_user
         (
-            user_name,
             user_username,
+            user_email,
             user_password
         )
         values
@@ -35,6 +35,15 @@ BEGIN
             p_name,
             p_username,
             p_password
+        );
+
+        insert into profile
+        ( 
+          username
+        )
+        values
+        (
+          p_username
         );
      
     END IF;
@@ -52,3 +61,47 @@ BEGIN
    select user_password from tbl_user where user_username = p_username;
 END$$
 DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS sp_editWeight;
+
+DELIMITER $$
+CREATE  PROCEDURE `sp_editWeight`(
+    IN weight INT,
+    IN user VARCHAR(45)
+)
+BEGIN
+   UPDATE profile SET weight = weight WHERE username = user;
+END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_editHeight;
+
+DELIMITER $$
+CREATE  PROCEDURE `sp_editHeight`(
+    IN height INT,
+    IN user VARCHAR(45)
+)
+BEGIN
+   UPDATE profile SET height = height WHERE username = user;
+END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_getProfile;
+
+DELIMITER $$
+CREATE  PROCEDURE `sp_getProfile`(
+    IN user VARCHAR(45)
+)
+BEGIN
+   select weight, height from profile where username = user;
+END$$
+DELIMITER ;
+
+
+
+
+
+
+
+

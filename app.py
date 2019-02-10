@@ -1,4 +1,5 @@
-import logging,sys, myfitnesspal,argparse
+import logging,sys,argparse
+#import myfitnesspal
 from flask import Flask, render_template,json,request, redirect, url_for
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
@@ -20,9 +21,48 @@ mysql.init_app(app)
 #def homePage(user):
 #    return render_template('home.html', user=user)
 
+@app.route('/update_profile',methods=['POST'])
+def updateProfile():
+
+		# read the posted values from the UI
+		_weight = request.form['weight']
+		_height = request.form['height']
+		_user = request.cookies.get("current_user")
+
+		app.logger.info("input weight %s", _weight)
+		app.logger.info("input height %s", _height)
+		#app.logger.info("input name len %d", len(_name))
+
+		if _weight:
+			#sql stuff
+				conn = mysql.connect()
+				cursor = conn.cursor()
+				cursor.callproc('sp_editWeight',([_weight, _user]))
+				data = cursor.fetchall()
+				conn.commit()
+				conn.close()
+
+		if _height:
+			#sql stuff
+				conn = mysql.connect()
+				cursor = conn.cursor()
+				cursor.callproc('sp_editHeight',([_height, _user]))
+				data = cursor.fetchall()
+				conn.commit()
+				conn.close()
+
+		return redirect('home')
+
+
+
 @app.route("/nutrition")
 def showNutrition():
 	return render_template('nutrition.html')
+
+@app.route("/edit_profile")
+def showEditProfile():
+	user = request.cookies.get("current_user")
+	return render_template('edit_profile.html', user=user)
 
 @app.route("/workout")
 def showWorkout():
@@ -38,7 +78,21 @@ def showGoals():
 
 @app.route("/profile")
 def showProfile():
-	return render_template('profile.html')
+	_user = request.cookies.get("current_user")
+
+	conn = mysql.connect()
+	cursor = conn.cursor()
+	cursor.callproc('sp_getProfile',([_user]))
+	data = cursor.fetchall()
+	conn.commit()
+	conn.close()
+	app.logger.info("data %s", data[0][0])
+	#_weight = data.weight 
+	#_height = data.height
+	_weight = data[0][0]
+	_height = data[0][1]
+
+	return render_template('profile.html', user=_user, height = _height, weight = _weight)
 
 @app.route("/friends")
 def showFriends():

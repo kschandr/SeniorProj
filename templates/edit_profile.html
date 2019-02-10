@@ -40,16 +40,16 @@
 
         <div class="jumbotron">
         <h2>Personal Info</h2>
-        <a href="edit_profile">Edit</a>
+        <form class="form-update">
         <table>
         
            <tr>
                 <th>Weight</th>
-                <td> {{weight}} </td>
+                <td> <input name="weight" id="weight" class="form-control" placeholder="weight"> </td>
            </tr>
            <tr>
                 <th>Height</th>
-                <td> {{height}} </td>
+                <td> <input name="height" id="height" class="form-control" placeholder="height"> </td>
            </tr>
            <tr>
                 <th>Progress</th>
@@ -57,6 +57,10 @@
            </tr>
 
         </table>
+
+        <button id="edit_done" class="btn btn-sm btn-primary" type="button">Done</button>
+        
+        </form>
         </div>
         
         <div class="jumbotron">
