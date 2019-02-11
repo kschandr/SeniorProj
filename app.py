@@ -4,7 +4,7 @@ from flask import Flask, render_template,json,request, redirect, url_for
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
-
+from helper import *
 app = Flask(__name__)
 mysql = MySQL()
 
@@ -23,18 +23,19 @@ mysql.init_app(app)
 
 @app.route('/update_profile',methods=['POST'])
 def updateProfile():
-
 		# read the posted values from the UI
 		_weight = request.form['weight']
 		_height = request.form['height']
+		_age = request.form['age']
+		_sex = request.form['sex']
 		_user = request.cookies.get("current_user")
 
-		app.logger.info("input weight %s", _weight)
-		app.logger.info("input height %s", _height)
+		app.logger.info("input weight: %s, height: %s, age: %s, sex: %s", _weight, _height,_age, _sex)
+		#app.logger.info("input height %s", _height)
 		#app.logger.info("input name len %d", len(_name))
 
 		if _weight:
-			#sql stuff
+				#sql stuff
 				conn = mysql.connect()
 				cursor = conn.cursor()
 				cursor.callproc('sp_editWeight',([_weight, _user]))
@@ -44,12 +45,22 @@ def updateProfile():
 
 		if _height:
 			#sql stuff
+				height_arr= _height.split("'")
+				##currently the height table stores ints. So round to neared int
+				h_inch = convertFeetToInches(height_arr)
+				app.logger.info("hegiht in cm %d", h_inch)
 				conn = mysql.connect()
 				cursor = conn.cursor()
-				cursor.callproc('sp_editHeight',([_height, _user]))
+				cursor.callproc('sp_editHeight',([h_inch, _user]))
 				data = cursor.fetchall()
 				conn.commit()
 				conn.close()
+		if _age and _sex:
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.callproc('sp_editAgeSex', ([_age, _sex, _user]))
+			conn.commit()
+			conn.close()
 
 		return redirect('home')
 
@@ -62,7 +73,8 @@ def showNutrition():
 @app.route("/edit_profile")
 def showEditProfile():
 	user = request.cookies.get("current_user")
-	return render_template('edit_profile.html', user=user)
+	heights = [str(feet) + "'" + str(inch) for feet in range(4,7) for inch in range(0,12)][8:]
+	return render_template('edit_profile.html', user=user, heights = heights)
 
 @app.route("/workout")
 def showWorkout():
@@ -78,21 +90,29 @@ def showGoals():
 
 @app.route("/profile")
 def showProfile():
+	_weight= _height= _age= _sex= bmr=bmi=tdee=disp_height=0
 	_user = request.cookies.get("current_user")
-
 	conn = mysql.connect()
 	cursor = conn.cursor()
 	cursor.callproc('sp_getProfile',([_user]))
 	data = cursor.fetchall()
 	conn.commit()
 	conn.close()
-	app.logger.info("data %s", data[0][0])
-	#_weight = data.weight 
+	app.logger.info("data: %s", data)
+	#app.logger.info("data %s", data[0][0])
+	#_weight = data.weight
 	#_height = data.height
-	_weight = data[0][0]
-	_height = data[0][1]
-
-	return render_template('profile.html', user=_user, height = _height, weight = _weight)
+	if data[0][0]:
+		_weight = data[0][0]
+		app.logger.info("table %d", data[0][1])
+		_height = data[0][1]
+		disp_height = convertInchesToFeet(_height)
+		_age = data[0][2]
+		_sex = data[0][3]
+		bmr = calcBMR(_height,_weight,_age,_sex)
+		tdee = calcTDEE(bmr, "sedentary")
+		bmi = calcBMI(_height,_weight)
+	return render_template('profile.html', user=_user, height = disp_height, weight = _weight, bmr=bmr, tdee=tdee, bmi=bmi)
 
 @app.route("/friends")
 def showFriends():
@@ -105,7 +125,7 @@ def homePage():
 
 		## This is how you get the username
 		user = request.cookies.get("current_user")
-		app.logger.info(user)
+		app.logger.info("This is the home page. Current user: %s", user)
 		## stores totals in calories, macros (dict form)
 		#day_calories = client.get_date(2019,2,2).totals
 		#app.logger.info("user day calories: %d", day_calories)
@@ -118,13 +138,11 @@ def showSignIn():
 
 @app.route('/signIn',methods=['POST'])
 def signIn():
-
 		# read the posted values from the UI
 		_name = request.form['inputName']
 		app.logger.info("!!!!$$This is the input name %s", _name)
 		#app.logger.info("input name len %d", len(_name))
 		_password = request.form['inputPassword']
-
 
 		# validate the received values
 		if _name and _password:
@@ -134,7 +152,9 @@ def signIn():
 				#_hashed_password = generate_password_hash(_password)
 				cursor.callproc('sp_loginUser',([_name]))
 				data = cursor.fetchall()
-				if not check_password_hash(data, _password):
+				if len(data) == 0 :
+					return json.dumps({'error': 'this username is not found'})
+				if not check_password_hash(data[0][0], _password):
 						app.logger.error("not a match for password")
 						return json.dumps({'error':str(data[0])})
 				else:
@@ -146,6 +166,7 @@ def signIn():
 						app.logger.info("setting name cookie %s", _name)
 						return response
 		else:
+				app.logger.error("incomplete signin")
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
 
 
@@ -160,7 +181,6 @@ def main():
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
-
 		# read the posted values from the UI
 		_name = request.form['inputName']
 		_email = request.form['inputEmail']
@@ -174,7 +194,7 @@ def signUp():
 				_hashed_password = generate_password_hash(_password)
 
 				#save the user and password into the usr_tbl via sp_createUser stored proc.
-				cursor.callproc('sp_createUser',(_name,_email,_password))
+				cursor.callproc('sp_createUser',(_name,_email,_hashed_password))
 				data = cursor.fetchall()
 
 				if len(data) is 0:
@@ -186,6 +206,7 @@ def signUp():
 						app.logger.info("setting name cookie %s", request.cookies.get("current_user"))
 						return response
 				else:
+						app.logger.info("Unable to create user on mysql")
 						return json.dumps({'error':str(data[0])})
 		else:
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
