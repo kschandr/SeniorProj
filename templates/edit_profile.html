@@ -64,6 +64,15 @@
                 <th>Sex</th>
                 <td> <input type="radio" name="sex" id="male" class="form-control" value="male"> Male </input><br></td>
                 <td><input type="radio" name="sex" id="female" class="form-control" value="female"> Female </input><br></td>
+           </tr>s
+           <tr>
+                <th>Activity Level</th>
+                <td><select name="activity">
+                    {% for a in activities %}
+                    <option value="{{a}}" SELECTED>{{a}}</option>
+                    {% endfor %}
+                </select>
+                </td>
            </tr>
            <tr>
                 <th>Progress</th>
