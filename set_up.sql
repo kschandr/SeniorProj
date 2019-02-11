@@ -12,7 +12,7 @@ CREATE TABLE tbl_user (
   user_email VARCHAR(45) NULL,
   user_password VARCHAR(95) NULL,
   PRIMARY KEY (user_id));
-
+  
 drop table if exists tbl_profile;
 
 CREATE TABLE tbl_profile (
@@ -21,15 +21,14 @@ CREATE TABLE tbl_profile (
   height int(11) DEFAULT NULL,
   sex varchar(10) NULL,
   age int(11) NULL,
-  activity varchar(95) null,
   PRIMARY KEY (username)
 );
 
-
+  
 drop table if exists users;
 
 
-/*
+/* 
 Stored procedures stuff
 */
 
@@ -43,11 +42,11 @@ CREATE  PROCEDURE `sp_createUser`(
 )
 BEGIN
     if ( select exists (select 1 from tbl_user where user_username = p_username) ) THEN
-
+     
         select 'Username Exists !!';
-
+     
     ELSE
-
+     
         insert into tbl_user
         (
             user_username,
@@ -60,16 +59,16 @@ BEGIN
             p_email,
             p_password
         );
-
+        
         insert into tbl_profile
-        (
+        ( 
           username
         )
         values
         (
           p_username
         );
-
+     
     END IF;
 END$$
 DELIMITER ;
@@ -82,9 +81,9 @@ CREATE  PROCEDURE `sp_loginUser`(
     IN p_username VARCHAR(45)
 )
 BEGIN
-  if (select exists(select 1 from tbl_profile where username=username)) then
-    select user_password from tbl_user where user_username = p_username;
-  end if;
+	if (select exists(select 1 from tbl_profile where username=username)) then
+		select user_password from tbl_user where user_username = p_username;
+	end if;
 END$$
 DELIMITER ;
 
@@ -96,7 +95,7 @@ CREATE PROCEDURE `sp_editHeight`(
     IN username VARCHAR(45)
 )
 BEGIN
-  UPDATE tbl_profile SET height = height WHERE username = username;
+	UPDATE tbl_profile SET height = height WHERE username = username;
 
 END$$
 DELIMITER ;
@@ -109,11 +108,10 @@ CREATE PROCEDURE `sp_editWeight`(
     IN username VARCHAR(45)
 )
 BEGIN
-  UPDATE tbl_profile SET weight = weight WHERE username = username;
+	UPDATE tbl_profile SET weight = weight WHERE username = username;
 END$$
 DELIMITER ;
 
-/*
 DROP PROCEDURE IF EXISTS sp_editAgeSex;
 
 DELIMITER $$
@@ -123,24 +121,7 @@ CREATE PROCEDURE `sp_editAgeSex`(
     IN username VARCHAR(45)
 )
 BEGIN
-  UPDATE tbl_profile SET age = age, sex=sex WHERE username = username;
-END$$
-DELIMITER ;
-*/
-
-drop procedure if exists sp_editAgeSex;
-drop procedure if exists sp_editAgeSexActivity;
-
-
-DELIMITER $$
-CREATE PROCEDURE `sp_editAgeSexActivity`(
-    IN age INT,
-    IN sex VARCHAR(45),
-    IN activity varchar(95),
-    IN username VARCHAR(45)
-)
-BEGIN
-  UPDATE tbl_profile SET age = age, sex=sex, activity=activity WHERE username = username;
+	UPDATE tbl_profile SET age = age and sex=sex WHERE username = username;
 END$$
 DELIMITER ;
 
@@ -152,6 +133,9 @@ CREATE PROCEDURE `sp_getProfile`(
     IN username VARCHAR(45)
 )
 BEGIN
-  select weight, height, age, sex, activity from tbl_profile where username = username;
+	select weight, height, age, sex from tbl_profile where username = username;
 END$$
 DELIMITER ;
+
+
+

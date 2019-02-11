@@ -28,7 +28,9 @@ def updateProfile():
 		_height = request.form['height']
 		_age = request.form['age']
 		_sex = request.form['sex']
+		_activity = request.form['activity']
 		_user = request.cookies.get("current_user")
+		app.logger.info("input activity: %s", _activity)
 
 		app.logger.info("input weight: %s, height: %s, age: %s, sex: %s", _weight, _height,_age, _sex)
 		#app.logger.info("input height %s", _height)
@@ -48,17 +50,17 @@ def updateProfile():
 				height_arr= _height.split("'")
 				##currently the height table stores ints. So round to neared int
 				h_inch = convertFeetToInches(height_arr)
-				app.logger.info("hegiht in cm %d", h_inch)
+				app.logger.info("hegiht in inches %d", h_inch)
 				conn = mysql.connect()
 				cursor = conn.cursor()
 				cursor.callproc('sp_editHeight',([h_inch, _user]))
 				data = cursor.fetchall()
 				conn.commit()
 				conn.close()
-		if _age and _sex:
+		if _age and _sex and _activity:
 			conn = mysql.connect()
 			cursor = conn.cursor()
-			cursor.callproc('sp_editAgeSex', ([_age, _sex, _user]))
+			cursor.callproc('sp_editAgeSexActivity', ([_age, _sex, _activity, _user]))
 			conn.commit()
 			conn.close()
 
@@ -73,8 +75,12 @@ def showNutrition():
 @app.route("/edit_profile")
 def showEditProfile():
 	user = request.cookies.get("current_user")
+	activities = ["Sedentary (little to no exercise)", "Lightly Active (light exercise/sports 1-3 days/week)",
+	            "Moderately Active (moderate exercise/sports 3-5 days/week)",
+	            "Very Active (hard exercise/sports 6-7 days a week)",
+	            "Extremely Active (very heavy exercise/ physical job/ training twice a day)"]
 	heights = [str(feet) + "'" + str(inch) for feet in range(4,7) for inch in range(0,12)][8:]
-	return render_template('edit_profile.html', user=user, heights = heights)
+	return render_template('edit_profile.html', user=user, heights = heights, activities=activities)
 
 @app.route("/workout")
 def showWorkout():
@@ -109,8 +115,10 @@ def showProfile():
 		disp_height = convertInchesToFeet(_height)
 		_age = data[0][2]
 		_sex = data[0][3]
+		_activity = data[0][4]
+		app.logger.info("_activity from profile: %s", _activity)
 		bmr = calcBMR(_height,_weight,_age,_sex)
-		tdee = calcTDEE(bmr, "sedentary")
+		tdee = calcTDEE(bmr, _activity)
 		bmi = calcBMI(_height,_weight)
 	return render_template('profile.html', user=_user, height = disp_height, weight = _weight, bmr=bmr, tdee=tdee, bmi=bmi)
 
@@ -138,6 +146,9 @@ def showSignIn():
 
 @app.route('/signIn',methods=['POST'])
 def signIn():
+		#clean cookies
+		response = redirect('home')
+		response.set_cookie("current_user", '', max_age=0)
 		# read the posted values from the UI
 		_name = request.form['inputName']
 		app.logger.info("!!!!$$This is the input name %s", _name)
@@ -181,6 +192,9 @@ def main():
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
+		#clean cookies
+		response = redirect('home')
+		response.set_cookie("current_user", '', max_age=0)
 		# read the posted values from the UI
 		_name = request.form['inputName']
 		_email = request.form['inputEmail']
