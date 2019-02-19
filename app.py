@@ -1,10 +1,11 @@
-import logging,sys,argparse
+import logging,sys,argparse, random
 #import myfitnesspal
 from flask import Flask, render_template,json,request, redirect, url_for
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
 from helper import *
+
 app = Flask(__name__)
 mysql = MySQL()
 
@@ -92,7 +93,63 @@ def showNews():
 
 @app.route("/goals")
 def showGoals():
+	user = request.cookies.get("current_user")
+	conn = mysql.connect()
+	cursor = conn.cursor()
+	# 104 is the length of the motivation table
+	_id = random.randint(1,104)
+	cursor.callproc('sp_getQuote', ([_id]))
+	data = cursor.fetchall()
+	quote = data[0][0]
+
+	cursor.callproc('sp_getGoals', ([user]))
+	data = cursor.fetchall()
+	app.logger.info(data)
+	lift_bool = True if data[0][0]==1 else False
+	run_bool = True if data[0][1]==1 else False
+	weight_goal = data[0][2]
+	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_goal)
+
+@app.route("/update_goals",methods=['POST'])
+def updateGoals():
+	_weight_goal = request.form['weight']
+	_pr = request.form.getlist("pr")
+	app.logger.info(request.form.getlist("pr"))
+	_user = request.cookies.get("current_user")
+	if len(_pr) ==2 and _pr[0] and _pr[1]:
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		cursor.callproc('sp_editGoals',([_user, 1,1,_weight_goal]))
+		data = cursor.fetchall()
+		conn.commit()
+		conn.close()
+	elif len(_pr) ==1 and _pr[0] == "5k":
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		cursor.callproc('sp_editGoals',([_user,0, 1, _weight_goal]))
+		data = cursor.fetchall()
+		conn.commit()
+		conn.close()
+	elif len(_pr) ==1 and _pr[0]:
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		cursor.callproc('sp_editGoals',([_user,1,0, _weight_goal]))
+		data = cursor.fetchall()
+		conn.commit()
+		conn.close()
+	else:
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		cursor.callproc('sp_editGoals',([_user,0, 0,_weight_goal]))
+		data = cursor.fetchall()
+		conn.commit()
+		conn.close()
 	return render_template('goals.html')
+
+@app.route("/edit_goals")
+def editGoals():
+	weights = ["Lose", "Maintain", "Gain"]
+	return render_template("edit_goals.html", weights = weights)
 
 @app.route("/profile")
 def showProfile():
