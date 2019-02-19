@@ -6,7 +6,8 @@
 
 
     <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
-    <link href="../static/signup.css" rel="stylesheet">
+    <script src="../static/js/jquery-3.1.0.min.js"></script>
+    <script src="../static/js/edit_done_goal.js"></script>
 
 </head>
 
@@ -35,51 +36,39 @@
                 </ul>
             </nav>
             <h1>Goals</h1>
-            <a href="edit_goals">Edit</a>
+
         </div>
 
         <div class="jumbotron">
-        <h2>Weight Goal</h2>
-
+        <h2>Goals</h2>
+        <form class="form-update">
         <table>
            <tr>
-
-                <th>{{weight_goal}} weight</th>
-
-                <td>Edit</td>
+                <th>Weight Goals</th>
+                <td> <select name= "weight">
+                        {% for w in weights %}
+                        <option value= "{{w}}" SELECTED>{{w}}</option>"
+                        {% endfor %}
+                    </select></td>
            </tr>
            <tr>
-                <td> Goal Weight: lbs , Current: lbs</td>
-           </tr>
-        </table></div>
-
-        <div class="jumbotron">
-        <h2>PR Goal</h2>
-
-        <table>
-          {%if run_bool %}
-            <tr>
-                <th>Running Goal</th>
-            </tr>
-          {% endif %}
-          {%if lift_bool %}
-            <tr>
-                    <th>Weightlifting Goal</th>
-            </tr>
-          {% endif %}
-        </table></div>
-
-        <div class="jumbotron">
-        <h2>Motivation</h2>
-        <table>
-
-           <tr>
-                <th>{{quote}}</th>
+                <th>PR Goal</th>
+                <td>
+                    <input type="checkbox" name="pr" value="lifting" checked>
+                    <label>Bench/Squat/Deadlift</label>
+                </td>
+                <td>
+                    <input type="checkbox" name="pr" value="5k" checked>
+                    <label>5K Time</label>
+                </td>
            </tr>
 
         </table>
-        </div>
 
+        <button id="edit_done_goal" class="btn btn-sm btn-primary" type="button">Done</button>
+
+        </form>
+        </div>
 
         <footer class="footer">
             <p>&copy; O.K 2019</p>
