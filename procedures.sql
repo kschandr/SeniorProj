@@ -155,3 +155,14 @@ BEGIN
   select weight, height, age, sex, activity from tbl_profile where username = username;
 END$$
 DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE `sp_getWorkout`(
+    IN username VARCHAR(45),
+    IN day VARCHAR(20)
+)
+BEGIN
+  select workout, muscle_group from exercises where id IN (select id from plans where day = day and goal IN (select weight_goal from tbl_goals where username=username));
+END$$
+DELIMITER ;
+

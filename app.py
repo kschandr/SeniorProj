@@ -5,6 +5,8 @@ from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
 from helper import *
+from datetime import date
+import calendar
 
 app = Flask(__name__)
 mysql = MySQL()
@@ -85,7 +87,26 @@ def showEditProfile():
 
 @app.route("/workout")
 def showWorkout():
-	return render_template('workout.html')
+	user = request.cookies.get("current_user")
+	conn = mysql.connect()
+	cursor = conn.cursor()
+	# 104 is the length of the motivation table
+	_id = random.randint(1,104)
+	cursor.callproc('sp_getQuote', ([_id]))
+	data = cursor.fetchall()
+	quote = data[0][0]
+
+	my_date = date.today()
+	day = calendar.day_name[my_date.weekday()]
+
+	cursor.callproc('sp_getWorkout', ([user, day]))
+	data = cursor.fetchall()
+	app.logger.info(data)
+
+	workout = data[0][0]
+	muscle_group = data[0][1]
+
+	return render_template('workout.html', quote=quote, workout=workout, muscle_group=muscle_group)
 
 @app.route("/news")
 def showNews():
@@ -105,9 +126,14 @@ def showGoals():
 	cursor.callproc('sp_getGoals', ([user]))
 	data = cursor.fetchall()
 	app.logger.info(data)
-	lift_bool = True if data[0][0]==1 else False
-	run_bool = True if data[0][1]==1 else False
-	weight_goal = data[0][2]
+	try:
+		lift_bool = True if data[0][0]==1 else False
+		run_bool = True if data[0][1]==1 else False
+		weight_goal = data[0][2]
+	except IndexError:
+		lift_bool = True
+		run_bool = True
+		weight_goal = 0
 	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_goal)
 
 @app.route("/update_goals",methods=['POST'])

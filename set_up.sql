@@ -137,5 +137,16 @@ BEGIN
 END$$
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS sp_getWorkout;
 
+
+DELIMITER $$
+CREATE PROCEDURE `sp_getWorkout`(
+    IN username VARCHAR(45),
+    IN day VARCHAR(20)
+)
+BEGIN
+  select workout, muscle_group from exercises where id = (select id from plans where day = day and goal = lower(select weight_goal from tbl_goals where username=username));
+END$$
+DELIMITER ;
 
