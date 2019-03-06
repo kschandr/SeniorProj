@@ -156,6 +156,8 @@ BEGIN
 END$$
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS sp_getWorkout;
+
 DELIMITER $$
 CREATE PROCEDURE `sp_getWorkout`(
     IN username VARCHAR(45),
@@ -166,3 +168,28 @@ BEGIN
 END$$
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS sp_getCompletion;
+
+DELIMITER $$
+CREATE PROCEDURE `sp_getCompletion`(
+    IN username VARCHAR(45),
+    IN day VARCHAR(60)
+)
+BEGIN
+  if ( select exists (select 1 from workout_complete where username=username and day=day)) 
+  THEN select 'done'
+  ELSE select 'not'
+END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_workoutDone;
+
+DELIMITER $$
+CREATE PROCEDURE `sp_workoutDone`(
+    IN username VARCHAR(45),
+    IN day VARCHAR(60)
+)
+BEGIN
+  insert into workout_complete (username, day) values (username, day);
+END$$
+DELIMITER ;

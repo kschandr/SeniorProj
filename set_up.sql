@@ -24,7 +24,7 @@ CREATE TABLE tbl_profile (
   PRIMARY KEY (username)
 );
 
-  
+
 drop table if exists users;
 
 
@@ -139,14 +139,53 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_getWorkout;
 
-
 DELIMITER $$
 CREATE PROCEDURE `sp_getWorkout`(
     IN username VARCHAR(45),
     IN day VARCHAR(20)
 )
 BEGIN
-  select workout, muscle_group from exercises where id = (select id from plans where day = day and goal = lower(select weight_goal from tbl_goals where username=username));
+  select workout, muscle_group from exercises where id IN (select id from plans where day = day and goal IN (select weight_goal from tbl_goals where username=username));
 END$$
 DELIMITER ;
+
+drop table if exists workout_complete;
+
+CREATE TABLE workout_complete (
+  username varchar(45) NOT NULL,
+  day varchar(60) NOT NULL,
+  PRIMARY KEY (username, day)
+);
+
+
+DROP PROCEDURE IF EXISTS sp_getCompletion;
+
+DELIMITER $$
+CREATE PROCEDURE `sp_getCompletion`(
+    IN username VARCHAR(45),
+    IN day VARCHAR(60)
+)
+BEGIN
+   if ( select exists (select 1 from workout_complete where username=username and day=day)) 
+  THEN select 'done';
+  ELSE select 'not';
+  END IF;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS sp_workoutDone;
+
+DELIMITER $$
+CREATE PROCEDURE `sp_workoutDone`(
+    IN username VARCHAR(45),
+    IN day VARCHAR(60)
+)
+BEGIN
+  insert into workout_complete (username, day) values (username, day);
+END$$
+DELIMITER ;
+
+
+
 

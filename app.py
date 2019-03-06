@@ -106,7 +106,37 @@ def showWorkout():
 	workout = data[0][0]
 	muscle_group = data[0][1]
 
-	return render_template('workout.html', quote=quote, workout=workout, muscle_group=muscle_group)
+	try:
+		cursor.callproc('sp_getCompletion', ([user, my_date]))
+		data = cursor.fetchall()
+		app.logger.info(data)
+		done = data[0][0]
+		if done == "done":
+			workout_done = True
+		else:
+			workout_done = False
+		#super janky try/except block... should change
+	except IndexError:
+		workout_done = False
+
+	return render_template('workout.html', quote=quote, workout=workout, muscle_group=muscle_group, workout_done=workout_done)
+
+
+@app.route('/workoutDone')
+def workoutDone():
+		
+	_user = request.cookies.get("current_user")
+	
+	#sql stuff
+	conn = mysql.connect()
+	cursor = conn.cursor()
+	my_date = date.today()
+	cursor.callproc('sp_workoutDone',([_user, my_date]))
+	data = cursor.fetchall()
+	conn.commit()
+	conn.close()
+
+	return render_template('workout.html')
 
 @app.route("/news")
 def showNews():
@@ -225,16 +255,23 @@ def homePage():
 
 @app.route("/showSignIn")
 def showSignIn():
+	#refresh user 
+	#clean cookies
+	response = redirect('home')
+	#response.set_cookie("current_user", '', max_age=0)
+	response.delete_cookie("current_user")
 	return render_template('signin.html')
 
 @app.route('/signIn',methods=['POST'])
 def signIn():
 		#clean cookies
 		response = redirect('home')
-		response.set_cookie("current_user", '', max_age=0)
+		#response.set_cookie("current_user", '', max_age=0)
+		response.delete_cookie("current_user")
 		# read the posted values from the UI
 		_name = request.form['inputName']
 		app.logger.info("!!!!$$This is the input name %s", _name)
+		response.set_cookie("current_user", _name, max_age=0)
 		#app.logger.info("input name len %d", len(_name))
 		_password = request.form['inputPassword']
 
@@ -256,6 +293,7 @@ def signIn():
 						conn.close()
 						## set the user cookies
 						response = redirect('home')
+						response.delete_cookie("current_user")
 						response.set_cookie("current_user", _name)
 						app.logger.info("setting name cookie %s", _name)
 						return response
