@@ -9,6 +9,9 @@ from datetime import date
 import calendar
 
 app = Flask(__name__)
+# To use session dictionary, make sure to have app secret key
+# generated in terminal via: python -c 'import os; print(os.urandom(16))'
+app.secret_key = b'\xcdW\x16\x13\xcfU\xf0p\xd5\xdf\xef\xa7\x9b\xac\xb0H'
 mysql = MySQL()
 
 # MySQL configurations
@@ -24,26 +27,6 @@ mysql.init_app(app)
 #def homePage(user):
 #    return render_template('home.html', user=user)
 
-# login wrapper
-# CREDIT: https://stackoverflow.com/questions/32640090/python-flask-keeping-track-of-user-sessions-how-to-get-session-cookie-id
-
-def login_required(function_to_protect):
-    @wraps(function_to_protect)
-    def wrapper(*args, **kwargs):
-        user_id = request.cookies.get('current_user')
-        if user_id:
-            user = database.get(user_id)
-            if user:
-                # Success!
-                return function_to_protect(*args, **kwargs)
-            else:
-                flash("Session exists, but user does not exist (anymore)")
-                return redirect(url_for('login'))
-        else:
-            flash("Please log in")
-            return redirect(url_for('login'))
-    return wrapper
-
 # helper
 def run_SP(*args, s_proc=None,):
 	if s_proc == None:
@@ -56,7 +39,29 @@ def run_SP(*args, s_proc=None,):
 	conn.close()
 	return data
 
+# login wrapper
+# CREDIT: https://stackoverflow.com/questions/32640090/python-flask-keeping-track-of-user-sessions-how-to-get-session-cookie-id
+
+def login_required(function_to_protect):
+    def a_wrapper_accepting_arguments(*args, **kwargs):
+        user_id = request.cookies.get('current_user')
+        if user_id:
+            data = run_SP(user_id, s_proc="sp_loginUser")
+            if len(data) != 0:
+                # Success!
+                return function_to_protect(*args, **kwargs)
+            else:
+                flash("Session exists, but user does not exist (anymore)")
+                return redirect(url_for('showSignIn'))
+        else:
+            return redirect(url_for('showSignIn'))
+    a_wrapper_accepting_arguments.__name__ = function_to_protect.__name__
+    return a_wrapper_accepting_arguments
+
+
+
 @app.route('/update_profile',methods=['POST'])
+@login_required
 def updateProfile():
 		# read the posted values from the UI
 		_weight = request.form['weight']
@@ -91,10 +96,12 @@ def updateProfile():
 
 
 @app.route("/nutrition")
+@login_required
 def showNutrition():
 	return render_template('nutrition.html')
 
 @app.route("/edit_profile")
+@login_required
 def showEditProfile():
 	user = request.cookies.get("current_user")
 	activities = ["Sedentary (little to no exercise)", "Lightly Active (light exercise/sports 1-3 days/week)",
@@ -105,6 +112,7 @@ def showEditProfile():
 	return render_template('edit_profile.html', user=user, heights = heights, activities=activities)
 
 @app.route("/workout")
+@login_required
 def showWorkout():
 	user = request.cookies.get("current_user")
 	# 104 is the length of the motivation table
@@ -138,6 +146,7 @@ def showWorkout():
 
 
 @app.route('/workoutDone')
+@login_required
 def workoutDone():
 
 	_user = request.cookies.get("current_user")
@@ -147,10 +156,12 @@ def workoutDone():
 	return render_template('workout.html')
 
 @app.route("/news")
+@login_required
 def showNews():
 	return render_template('news.html')
 
 @app.route("/goals")
+@login_required
 def showGoals():
 	user = request.cookies.get("current_user")
 	# 104 is the length of the motivation table
@@ -170,6 +181,7 @@ def showGoals():
 	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_goal)
 
 @app.route("/update_goals",methods=['POST'])
+@login_required
 def updateGoals():
 	_weight_goal = request.form['weight']
 	_pr = request.form.getlist("pr")
@@ -181,11 +193,13 @@ def updateGoals():
 	return render_template('goals.html')
 
 @app.route("/edit_goals")
+@login_required
 def editGoals():
 	weights = ["Lose", "Maintain", "Gain"]
 	return render_template("edit_goals.html", weights = weights)
 
 @app.route("/profile")
+@login_required
 def showProfile():
 	_weight= _height= _age= _sex= bmr=bmi=tdee=disp_height=0
 	_user = request.cookies.get("current_user")
@@ -204,12 +218,14 @@ def showProfile():
 	return render_template('profile.html', user=_user, height = disp_height, weight = _weight, bmr=bmr, tdee=tdee, bmi=bmi)
 
 @app.route("/friends")
+@login_required
 def showFriends():
 	return render_template('friends.html')
 
 
 @app.route("/success")
 @app.route("/home")
+@login_required
 def homePage():
 
 		## This is how you get the username
@@ -221,12 +237,15 @@ def homePage():
 		#return render_template('home.html', day_calories=day_calories, user=user)
 		return render_template('home.html', user=user)
 
+@app.route("/signOut")
+def signOut():
+	response = redirect('main')
+	response.delete_cookie("current_user")
+	return response
+
 @app.route("/showSignIn")
 def showSignIn():
-	#refresh user
-	#clean cookies
 	response = redirect('home')
-	#response.set_cookie("current_user", '', max_age=0)
 	response.delete_cookie("current_user")
 	return render_template('signin.html')
 
@@ -238,9 +257,6 @@ def signIn():
 		response.delete_cookie("current_user")
 		# read the posted values from the UI
 		_name = request.form['inputName']
-		app.logger.info("!!!!$$This is the input name %s", _name)
-		response.set_cookie("current_user", _name, max_age=0)
-		#app.logger.info("input name len %d", len(_name))
 		_password = request.form['inputPassword']
 
 		# validate the received values
@@ -248,6 +264,7 @@ def signIn():
 				#_hashed_password = generate_password_hash(_password)
 				data = run_SP(_name, s_proc='sp_loginUser')
 				if len(data) == 0 :
+					app.logger.error("User trying to log in not found")
 					flash("This username is not found, try signing up")
 					return json.dumps({'error': 'this username is not found'})
 				if not check_password_hash(data[0][0], _password):
@@ -257,7 +274,6 @@ def signIn():
 				else:
 						## set the user cookies
 						response = redirect('home')
-						response.delete_cookie("current_user")
 						response.set_cookie("current_user", _name)
 						app.logger.info("setting name cookie %s", _name)
 						return response
@@ -300,13 +316,14 @@ def signUp():
 						app.logger.info("setting name cookie %s", request.cookies.get("current_user"))
 						return response
 				else:
+						flash("Username exists already :(")
 						app.logger.info("Unable to create user on mysql")
 						return json.dumps({'error':str(data[0])})
 		else:
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
 		# parser = argparse.ArgumentParser(description='our fitness app.')
 		# parser.add_argument('MFP_username',
 		# 	help='your username for myfitnesspal')
@@ -317,4 +334,4 @@ if __name__ == "__main__":
 		# client = myfitnesspal.Client(args.MFP_username)
 
 
-		app.run(debug=True)
+app.run(debug=True)

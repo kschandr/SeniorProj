@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <div class="error">{{ message }}</div>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
   <head>
     <title>Python Flask App</title>
 
