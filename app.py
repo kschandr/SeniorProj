@@ -1,6 +1,6 @@
 import logging,sys,argparse, random
 #import myfitnesspal
-from flask import Flask, render_template,json,request, redirect, url_for
+from flask import Flask, render_template,json,request, redirect, url_for, flash
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
@@ -24,6 +24,38 @@ mysql.init_app(app)
 #def homePage(user):
 #    return render_template('home.html', user=user)
 
+# login wrapper
+# CREDIT: https://stackoverflow.com/questions/32640090/python-flask-keeping-track-of-user-sessions-how-to-get-session-cookie-id
+
+def login_required(function_to_protect):
+    @wraps(function_to_protect)
+    def wrapper(*args, **kwargs):
+        user_id = request.cookies.get('current_user')
+        if user_id:
+            user = database.get(user_id)
+            if user:
+                # Success!
+                return function_to_protect(*args, **kwargs)
+            else:
+                flash("Session exists, but user does not exist (anymore)")
+                return redirect(url_for('login'))
+        else:
+            flash("Please log in")
+            return redirect(url_for('login'))
+    return wrapper
+
+# helper
+def run_SP(*args, s_proc=None,):
+	if s_proc == None:
+		raise ValueError("No store proc provided for run_SP method")
+	conn = mysql.connect()
+	cursor = conn.cursor()
+	cursor.callproc(s_proc,(args))
+	data = cursor.fetchall()
+	conn.commit()
+	conn.close()
+	return data
+
 @app.route('/update_profile',methods=['POST'])
 def updateProfile():
 		# read the posted values from the UI
@@ -41,31 +73,18 @@ def updateProfile():
 
 		if _weight:
 				#sql stuff
-				conn = mysql.connect()
-				cursor = conn.cursor()
-				cursor.callproc('sp_editWeight',([_weight, _user]))
-				data = cursor.fetchall()
-				conn.commit()
-				conn.close()
+				run_SP(_weight, _user, s_proc='sp_editWeight')
 
 		if _height:
 			#sql stuff
 				height_arr= _height.split("'")
 				##currently the height table stores ints. So round to neared int
 				h_inch = convertFeetToInches(height_arr)
-				app.logger.info("hegiht in inches %d", h_inch)
-				conn = mysql.connect()
-				cursor = conn.cursor()
-				cursor.callproc('sp_editHeight',([h_inch, _user]))
-				data = cursor.fetchall()
-				conn.commit()
-				conn.close()
+				app.logger.info("height in inches %d", h_inch)
+				run_SP(h_inch, _user, s_proc='sp_editHeight')
+
 		if _age and _sex and _activity:
-			conn = mysql.connect()
-			cursor = conn.cursor()
-			cursor.callproc('sp_editAgeSexActivity', ([_age, _sex, _activity, _user]))
-			conn.commit()
-			conn.close()
+			run_SP(_age, _sex, _activity, _user, s_proc='sp_editAgeSexActivity')
 
 		return redirect('home')
 
@@ -88,27 +107,23 @@ def showEditProfile():
 @app.route("/workout")
 def showWorkout():
 	user = request.cookies.get("current_user")
-	conn = mysql.connect()
-	cursor = conn.cursor()
 	# 104 is the length of the motivation table
 	_id = random.randint(1,104)
-	cursor.callproc('sp_getQuote', ([_id]))
-	data = cursor.fetchall()
+	data = run_SP(_id, s_proc='sp_getQuote')
 	quote = data[0][0]
 
 	my_date = date.today()
 	day = calendar.day_name[my_date.weekday()]
 
-	cursor.callproc('sp_getWorkout', ([user, day]))
-	data = cursor.fetchall()
+	data = run_SP(user, day,s_proc= 'sp_getWorkout')
+
 	app.logger.info(data)
 
 	workout = data[0][0]
 	muscle_group = data[0][1]
 
 	try:
-		cursor.callproc('sp_getCompletion', ([user, my_date]))
-		data = cursor.fetchall()
+		data = run_SP(user, my_date, s_proc='sp_getCompletion')
 		app.logger.info(data)
 		done = data[0][0]
 		if done == "done":
@@ -124,17 +139,10 @@ def showWorkout():
 
 @app.route('/workoutDone')
 def workoutDone():
-		
+
 	_user = request.cookies.get("current_user")
-	
-	#sql stuff
-	conn = mysql.connect()
-	cursor = conn.cursor()
 	my_date = date.today()
-	cursor.callproc('sp_workoutDone',([_user, my_date]))
-	data = cursor.fetchall()
-	conn.commit()
-	conn.close()
+	run_SP(_user, my_date,s_proc='sp_workoutDone')
 
 	return render_template('workout.html')
 
@@ -145,16 +153,11 @@ def showNews():
 @app.route("/goals")
 def showGoals():
 	user = request.cookies.get("current_user")
-	conn = mysql.connect()
-	cursor = conn.cursor()
 	# 104 is the length of the motivation table
 	_id = random.randint(1,104)
-	cursor.callproc('sp_getQuote', ([_id]))
-	data = cursor.fetchall()
+	data = run_SP(_id, s_proc='sp_getQuote')
 	quote = data[0][0]
-
-	cursor.callproc('sp_getGoals', ([user]))
-	data = cursor.fetchall()
+	data = run_SP(user,s_proc='sp_getGoals')
 	app.logger.info(data)
 	try:
 		lift_bool = True if data[0][0]==1 else False
@@ -172,34 +175,9 @@ def updateGoals():
 	_pr = request.form.getlist("pr")
 	app.logger.info(request.form.getlist("pr"))
 	_user = request.cookies.get("current_user")
-	if len(_pr) ==2 and _pr[0] and _pr[1]:
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.callproc('sp_editGoals',([_user, 1,1,_weight_goal]))
-		data = cursor.fetchall()
-		conn.commit()
-		conn.close()
-	elif len(_pr) ==1 and _pr[0] == "5k":
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.callproc('sp_editGoals',([_user,0, 1, _weight_goal]))
-		data = cursor.fetchall()
-		conn.commit()
-		conn.close()
-	elif len(_pr) ==1 and _pr[0]:
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.callproc('sp_editGoals',([_user,1,0, _weight_goal]))
-		data = cursor.fetchall()
-		conn.commit()
-		conn.close()
-	else:
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.callproc('sp_editGoals',([_user,0, 0,_weight_goal]))
-		data = cursor.fetchall()
-		conn.commit()
-		conn.close()
+	_pr = list(map(int,_pr))
+	# 1 = weightlifting, 2 = 5k
+	run_SP(_user,_pr,_weight_goal, s_proc="sp_editGoals")
 	return render_template('goals.html')
 
 @app.route("/edit_goals")
@@ -211,24 +189,14 @@ def editGoals():
 def showProfile():
 	_weight= _height= _age= _sex= bmr=bmi=tdee=disp_height=0
 	_user = request.cookies.get("current_user")
-	conn = mysql.connect()
-	cursor = conn.cursor()
-	cursor.callproc('sp_getProfile',([_user]))
-	data = cursor.fetchall()
-	conn.commit()
-	conn.close()
+	data = run_SP(_user, s_proc='sp_getProfile')
 	app.logger.info("data: %s", data)
 	#app.logger.info("data %s", data[0][0])
 	#_weight = data.weight
 	#_height = data.height
 	if data[0][0]:
-		_weight = data[0][0]
-		app.logger.info("table %d", data[0][1])
-		_height = data[0][1]
+		_weight, _height,_age,_sex,_activity = data[0]
 		disp_height = convertInchesToFeet(_height)
-		_age = data[0][2]
-		_sex = data[0][3]
-		_activity = data[0][4]
 		app.logger.info("_activity from profile: %s", _activity)
 		bmr = calcBMR(_height,_weight,_age,_sex)
 		tdee = calcTDEE(bmr, _activity)
@@ -255,7 +223,7 @@ def homePage():
 
 @app.route("/showSignIn")
 def showSignIn():
-	#refresh user 
+	#refresh user
 	#clean cookies
 	response = redirect('home')
 	#response.set_cookie("current_user", '', max_age=0)
@@ -277,20 +245,16 @@ def signIn():
 
 		# validate the received values
 		if _name and _password:
-				#sql stuff
-				conn = mysql.connect()
-				cursor = conn.cursor()
 				#_hashed_password = generate_password_hash(_password)
-				cursor.callproc('sp_loginUser',([_name]))
-				data = cursor.fetchall()
+				data = run_SP(_name, s_proc='sp_loginUser')
 				if len(data) == 0 :
+					flash("This username is not found, try signing up")
 					return json.dumps({'error': 'this username is not found'})
 				if not check_password_hash(data[0][0], _password):
+						flash("Wrong password")
 						app.logger.error("not a match for password")
 						return json.dumps({'error':str(data[0])})
 				else:
-						conn.commit()
-						conn.close()
 						## set the user cookies
 						response = redirect('home')
 						response.delete_cookie("current_user")
@@ -323,17 +287,12 @@ def signUp():
 
 		# validate the received values
 		if _name and _email and _password:
-				#sql stuff
-				conn = mysql.connect()
-				cursor = conn.cursor()
 				_hashed_password = generate_password_hash(_password)
 
 				#save the user and password into the usr_tbl via sp_createUser stored proc.
-				cursor.callproc('sp_createUser',(_name,_email,_hashed_password))
-				data = cursor.fetchall()
+				data =run_SP(_name,_email,_hashed_password, s_proc='sp_createUser')
 
 				if len(data) is 0:
-						conn.commit()
 						## set the user cookies
 						## we should probably comply to GDPR :P
 						response = redirect('home')
