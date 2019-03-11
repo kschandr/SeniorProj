@@ -160,11 +160,11 @@ DROP PROCEDURE IF EXISTS sp_getWorkout;
 
 DELIMITER $$
 CREATE PROCEDURE `sp_getWorkout`(
-    IN username VARCHAR(45),
-    IN day VARCHAR(20)
+    IN u VARCHAR(45),
+    IN d VARCHAR(20)
 )
 BEGIN
-  select workout, muscle_group from exercises where id IN (select id from plans where day = day and goal IN (select weight_goal from tbl_goals where username=username));
+select workout, muscle_group from exercises where id = (select id from plans where day = d and goal = (select weight_goal from tbl_goals where username=n));
 END$$
 DELIMITER ;
 
@@ -186,10 +186,10 @@ DROP PROCEDURE IF EXISTS sp_workoutDone;
 
 DELIMITER $$
 CREATE PROCEDURE `sp_workoutDone`(
-    IN username VARCHAR(45),
-    IN day VARCHAR(60)
+    IN u VARCHAR(45),
+    IN d VARCHAR(60)
 )
 BEGIN
-  insert into workout_complete (username, day) values (username, day);
+  insert into workout_complete (username, day) values (u, d);
 END$$
 DELIMITER ;
