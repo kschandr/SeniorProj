@@ -37,25 +37,33 @@
             <h1>Workout</h1>
         </div>
 
-        
+
+        {% if not workout_done %}
         <div class="jumbotron">
-        <h2>Today's Workout</h2>
-
-        <table>
-           <tr>
-
-                <th>{{muscle_group}} Exercise</th>
-
-           </tr>
-           <tr>
-                <td><pre>{{workout}}</pre></td>
-           </tr>
-           <tr> <a href="workoutDone">Done!</a> </tr>
-        </table>
-
+            <h2>Today's Workout</h2>
+            <table>
+               <tr>
+                    <th>{{muscle_group}} Exercise</th>
+               </tr>
+               <tr>
+                    <td><pre>{{workout}}</pre></td>
+               </tr>
+               <tr> <a href="workoutDone">Done!</a> </tr>
+            </table>
         </div>
-        
-
+        {% else %}
+        <div class="jumbotron">
+            <h2>Congratulations!</h2>
+            <table>
+               <tr>
+                    <th>You finished today's workout!</th>
+               </tr>
+               <tr>
+                    <td><pre>Remember to hydrate and rest!</pre></td>
+               </tr>
+            </table>
+        </div>
+        {% endif %}
         
 
         <div class="jumbotron">

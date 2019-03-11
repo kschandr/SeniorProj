@@ -45,7 +45,7 @@ def login_required(function_to_protect):
     return wrapper
 
 # helper
-def run_SP(*args, s_proc=None,):
+def run_SP(*args, s_proc=None):
 	if s_proc == None:
 		raise ValueError("No store proc provided for run_SP method")
 	conn = mysql.connect()
@@ -114,13 +114,34 @@ def showWorkout():
 
 	my_date = date.today()
 	day = calendar.day_name[my_date.weekday()]
+	app.logger.info("today's day: %s", day)
+	app.logger.info("user: %s", user)
 
-	data = run_SP(user, day,s_proc= 'sp_getWorkout')
+	# plan_id = (run_SP(user, day, s_proc= 'sp_getPlanID'))[0][0]
+	# app.logger.info(plan_id)
+
+	# app.logger.info("plan id %s", plan_id)	
+
+	data = run_SP(user, day, s_proc= 'sp_getWorkout')
 
 	app.logger.info(data)
+	app.logger.info("workout data: %s", data)
+
+	# workout = "None"
+	# muscle_group = "None"
+	# for x in data:
+	# 	if x[0] == plan_id:
+	# 		app.logger.info("plan id %s", plan_id)	
+	# 		app.logger.info("selected %s", x[0])	
+	# 		workout = x[2]
+	# 		muscle_group = x[1]
+	# 		break
 
 	workout = data[0][0]
 	muscle_group = data[0][1]
+
+	app.logger.info("muscle %s", muscle_group)
+	app.logger.info("workout data: %s", workout)		
 
 	try:
 		data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -144,7 +165,7 @@ def workoutDone():
 	my_date = date.today()
 	run_SP(_user, my_date,s_proc='sp_workoutDone')
 
-	return render_template('workout.html')
+	return render_template('workout.html', workoutDone=True)
 
 @app.route("/news")
 def showNews():
