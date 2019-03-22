@@ -6,6 +6,9 @@ Table stuff
 
 drop table if exists tbl_user;
 
+/***tbl_user
+login and credentials for user
+*/
 CREATE TABLE tbl_user (
   user_id BIGINT AUTO_INCREMENT,
   user_username VARCHAR(45) NULL,
@@ -15,6 +18,9 @@ CREATE TABLE tbl_user (
 
 drop table if exists tbl_profile;
 
+/*** tbl_profile
+the user's bio info ie weight, height, etc.
+*/
 CREATE TABLE tbl_profile (
   username varchar(45) NOT NULL,
   weight int(11) DEFAULT NULL,
@@ -30,11 +36,21 @@ drop table if exists users;
 
 
 /*
-Stored procedures stuff
+Stored procedures 
 */
 
 DROP PROCEDURE IF EXISTS sp_createUser;
 
+/*** sp_createUser
+Updates a user login and password into the tbl_user.
+
+Parameters:
+----
+p_username: str, the username
+p_email: str, email address
+p_password: str, hashed password
+
+*/
 DELIMITER $$
 CREATE  PROCEDURE `sp_createUser`(
     IN p_username VARCHAR(45),
@@ -77,6 +93,13 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_loginUser;
 
+/*** sp_loginUser
+checks if the user logging in has credentials in the table
+
+Parameters:
+---
+p_username: str, the username
+*/
 DELIMITER $$
 CREATE  PROCEDURE `sp_loginUser`(
     IN p_username VARCHAR(45)
@@ -90,6 +113,14 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_editHeight;
 
+/***sp_editHeight
+edit the height value for a user
+
+Parameters:
+---
+height: int, the height in inches
+username: str, username whose height will be updated
+*/
 DELIMITER $$
 CREATE PROCEDURE `sp_editHeight`(
     IN height INT,
@@ -103,6 +134,15 @@ DELIMITER ;
 
 
 DROP PROCEDURE IF EXISTS sp_editWeight;
+
+/***sp_editWeight
+edit the weight value for a user
+
+Parameters:
+---
+weight: int, the weight in pounds
+username: str, username whose weight will be updated
+*/
 DELIMITER $$
 CREATE PROCEDURE `sp_editWeight`(
     IN weight INT,
@@ -113,25 +153,19 @@ BEGIN
 END$$
 DELIMITER ;
 
-/*
-DROP PROCEDURE IF EXISTS sp_editAgeSex;
-
-DELIMITER $$
-CREATE PROCEDURE `sp_editAgeSex`(
-    IN age INT,
-    IN sex VARCHAR(45),
-    IN username VARCHAR(45)
-)
-BEGIN
-  UPDATE tbl_profile SET age = age, sex=sex WHERE username = username;
-END$$
-DELIMITER ;
-*/
-
 drop procedure if exists sp_editAgeSex;
 drop procedure if exists sp_editAgeSexActivity;
 
+/***sp_editAgeSexActivity
+edit the age, sex, activity value for a user
 
+Parameters:
+---
+age: int
+sex: str, female or male
+activity: str, intensity of regular day activities
+username: str, username 
+*/
 DELIMITER $$
 CREATE PROCEDURE `sp_editAgeSexActivity`(
     IN age INT,
@@ -146,7 +180,13 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_getProfile;
 
+/***sp_getProfile. 
+Returns the profile of user
 
+Parameters:
+---
+username: str, username 
+*/
 DELIMITER $$
 CREATE PROCEDURE `sp_getProfile`(
     IN username VARCHAR(45)
@@ -158,18 +198,34 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_getWorkout;
 
+/***sp_getWorkout. 
+get a workout plan for the day
+
+Parameters:
+---
+username: str, username 
+day: str
+*/
 DELIMITER $$
 CREATE PROCEDURE `sp_getWorkout`(
-    IN u VARCHAR(45),
-    IN d VARCHAR(20)
+    IN username VARCHAR(45),
+    IN day VARCHAR(20)
 )
 BEGIN
-select workout, muscle_group from exercises where id = (select id from plans where day = d and goal = (select weight_goal from tbl_goals where username=n));
+  select workout, muscle_group from exercises where id IN (select id from plans where day = day and goal IN (select weight_goal from tbl_goals where username=username));
 END$$
 DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_getCompletion;
 
+/***sp_getCompletion. 
+returns a complete boolean if the user has a workout plan
+
+Parameters:
+---
+username: str, username 
+day: str
+*/
 DELIMITER $$
 CREATE PROCEDURE `sp_getCompletion`(
     IN username VARCHAR(45),
@@ -184,12 +240,84 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_workoutDone;
 
+/***sp_workoutDone. 
+updates the workout plan for the user to show that workout is completed
+
+Parameters:
+---
+username: str, username 
+day: str
+*/
 DELIMITER $$
 CREATE PROCEDURE `sp_workoutDone`(
-    IN u VARCHAR(45),
-    IN d VARCHAR(60)
+    IN username VARCHAR(45),
+    IN day VARCHAR(60)
 )
 BEGIN
-  insert into workout_complete (username, day) values (u, d);
+  insert into workout_complete (username, day) values (username, day);
+END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_editGoals;
+
+/***sp_editGoals. 
+updates goals for the user
+
+Parameters:
+---
+p_username: str, username 
+bool_list: str, has the list of goals the user wants to acheive (training goal)
+weight: str, weight goal (maintain, lose or gain)
+*/
+DELIMITER $$
+CREATE PROCEDURE `sp_editGoals`(
+	in p_username varchar(45),
+	in bool_list varchar(10),
+    in weight varchar(45)
+)
+BEGIN
+declare run boolean default 0;
+declare weights boolean default 0;
+set run = if(find_in_set('2',bool_list) <> 0, 1,0);
+set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
+
+UPDATE tbl_goals SET lift = weights, run_5k=run, weight_goal = weight WHERE username = p_username;
+END$$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_getGoals;
+
+/***sp_getGoals. 
+get goals for the user
+
+Parameters:
+---
+p_username: str, username 
+*/
+DELIMITER $$
+CREATE PROCEDURE `sp_getGoals`(
+	in p_username varchar(45)
+)
+BEGIN
+	select lift, run_5k, weight_goal from tbl_goals WHERE username = p_username;
+END$$
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS sp_getQuote;
+
+/***sp_getQuote. 
+get motivational quote
+
+Parameters:
+---
+id: int, the random integer that takes a motivational quote 
+*/
+DELIMITER $$
+CREATE PROCEDURE `sp_getQuote`(
+    IN id INT
+)
+BEGIN
+  select quote from motivation where id = id;
 END$$
 DELIMITER ;
