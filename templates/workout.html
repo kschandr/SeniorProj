@@ -30,12 +30,13 @@
                     </li>
                     <li role="presentation"><a href="news">News</a>
                     </li>
-                    <li role="presentation"><a href="showSignIn">Sign Out</a>
+                    <li role="presentation"><a href="signOut">Sign Out</a>
                     </li>
                 </ul>
             </nav>
             <h1>Workout</h1>
         </div>
+
 
 
         {% if not workout_done %}
@@ -51,6 +52,11 @@
                <tr> <a href="workoutDone">Done!</a> </tr>
             </table>
         </div>
+
+
+
+
+
         {% else %}
         <div class="jumbotron">
             <h2>Congratulations!</h2>
@@ -64,7 +70,7 @@
             </table>
         </div>
         {% endif %}
-        
+
 
         <div class="jumbotron">
         <h2>Motivation</h2>

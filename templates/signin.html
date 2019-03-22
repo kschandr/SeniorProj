@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
   <head>
     <title>Sign In!</title>
 
@@ -11,6 +12,18 @@
     <script src="../static/js/signIn.js"></script>
 
   </head>
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+    <div class="error">{{ message }}
+    </div>
+
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 
   <body>
 

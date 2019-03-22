@@ -1,14 +1,18 @@
-import logging,sys,argparse, random
-#import myfitnesspal
+import logging,sys,argparse, random, re
+# import myfitnesspal
 from flask import Flask, render_template,json,request, redirect, url_for, flash
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
 from helper import *
+import datetime
 from datetime import date
 import calendar
 
 app = Flask(__name__)
+# To use session dictionary, make sure to have app secret key
+# generated in terminal via: python -c 'import os; print(os.urandom(16))'
+app.secret_key = b'\xcdW\x16\x13\xcfU\xf0p\xd5\xdf\xef\xa7\x9b\xac\xb0H'
 mysql = MySQL()
 
 # MySQL configurations
@@ -19,33 +23,28 @@ app.config['MYSQL_DATABASE_HOST'] = 'ambari-head.csc.calpoly.edu'
 mysql.init_app(app)
 
 
+# client = myfitnesspal.Client("Danz1ty")
 
-#@app.route("/home/<user>")
-#def homePage(user):
-#    return render_template('home.html', user=user)
 
-# login wrapper
-# CREDIT: https://stackoverflow.com/questions/32640090/python-flask-keeping-track-of-user-sessions-how-to-get-session-cookie-id
+def run_SP(*args, s_proc=None,):
+	""" Runs the stored procedure
 
-def login_required(function_to_protect):
-    @wraps(function_to_protect)
-    def wrapper(*args, **kwargs):
-        user_id = request.cookies.get('current_user')
-        if user_id:
-            user = database.get(user_id)
-            if user:
-                # Success!
-                return function_to_protect(*args, **kwargs)
-            else:
-                flash("Session exists, but user does not exist (anymore)")
-                return redirect(url_for('login'))
-        else:
-            flash("Please log in")
-            return redirect(url_for('login'))
-    return wrapper
+	If the s_proc argument is not passed, an error is raised
 
-# helper
-def run_SP(*args, s_proc=None):
+	Parameters:
+	-----
+	args: str, optional
+		The arguments passed into the mySQL stored procedure
+	s_proc: str
+		The name of the stored procedure
+
+	Raises:
+	-----
+	ValueError
+		If no s_proc name is passed
+
+	"""
+
 	if s_proc == None:
 		raise ValueError("No store proc provided for run_SP method")
 	conn = mysql.connect()
@@ -56,9 +55,45 @@ def run_SP(*args, s_proc=None):
 	conn.close()
 	return data
 
+
+
+def login_required(function_to_protect):
+		"""Is a wrapper to ensure user is logged into a session
+
+		CREDIT: https://stackoverflow.com/questions/32640090/python-flask-keeping-track-of-user-sessions-how-to-get-session-cookie-id
+
+		Parameters:
+		-----
+		function_to_protect: func
+			The name of the function of which this wrapper precedes
+
+		"""
+
+		def a_wrapper_accepting_arguments(*args, **kwargs):
+				user_id = request.cookies.get('current_user')
+				if user_id:
+						data = run_SP(user_id, s_proc="sp_loginUser")
+						if len(data) != 0:
+								# Success!
+								return function_to_protect(*args, **kwargs)
+						else:
+								flash("Session exists, but user does not exist (anymore)")
+								return redirect(url_for('showSignIn'))
+				else:
+						return redirect(url_for('showSignIn'))
+		a_wrapper_accepting_arguments.__name__ = function_to_protect.__name__
+		return a_wrapper_accepting_arguments
+
+
 @app.route('/update_profile',methods=['POST'])
+@login_required
 def updateProfile():
-		# read the posted values from the UI
+		""" Allows the user to update their profile with weight, height, etc.
+
+		Calls a POST HTTP method onto the edit_profile.js
+
+		"""
+
 		_weight = request.form['weight']
 		_height = request.form['height']
 		_age = request.form['age']
@@ -91,21 +126,56 @@ def updateProfile():
 
 
 @app.route("/nutrition")
+@login_required
 def showNutrition():
+	""" Shows the calories and macros user has inputted
+
+	Dependent on MFP account
+
+	"""
+	app.logger.info("date today: %s", date.today())
+
+	# my_date = date.today() - datetime.timedelta(days = 1)
+	# day = client.get_date(my_date.year, my_date.month, my_date.day)
+	# res = client.get_food_search_results("bacon cheeseburger")
+	# app.logger.info("nutrition: \n%s", res)
+	# r = list(map(lambda x: (x, x.mfp_id), res))
+	# app.logger.info(r)
+	# goal_dict = day.goals
+	# cal_dict = day.totals
+	# return render_template('nutrition.html', cal=cal_dict.get('calories'), cal_g=goal_dict.get('calories'),\
+	# 			protein=cal_dict.get('protein'), protein_g=goal_dict.get('protein'), fat=cal_dict.get('fat'),\
+	# 			fat_g=goal_dict.get('fat'), carbs=cal_dict.get('carbohydrates'), carbs_g=goal_dict.get('carbohydrates'))
+
 	return render_template('nutrition.html')
 
+
 @app.route("/edit_profile")
+@login_required
 def showEditProfile():
+	""" show the edit profile page to the user
+
+	Form asks for activity level of user
+
+	"""
+
 	user = request.cookies.get("current_user")
 	activities = ["Sedentary (little to no exercise)", "Lightly Active (light exercise/sports 1-3 days/week)",
-	            "Moderately Active (moderate exercise/sports 3-5 days/week)",
-	            "Very Active (hard exercise/sports 6-7 days a week)",
-	            "Extremely Active (very heavy exercise/ physical job/ training twice a day)"]
+							"Moderately Active (moderate exercise/sports 3-5 days/week)",
+							"Very Active (hard exercise/sports 6-7 days a week)",
+							"Extremely Active (very heavy exercise/ physical job/ training twice a day)"]
 	heights = [str(feet) + "'" + str(inch) for feet in range(4,7) for inch in range(0,12)][8:]
 	return render_template('edit_profile.html', user=user, heights = heights, activities=activities)
 
 @app.route("/workout")
+@login_required
 def showWorkout():
+	""" show the assigned workout for the day
+
+	Depends on the day of the week and the user's goals
+
+	"""
+
 	user = request.cookies.get("current_user")
 	# 104 is the length of the motivation table
 	_id = random.randint(1,104)
@@ -120,7 +190,7 @@ def showWorkout():
 	# plan_id = (run_SP(user, day, s_proc= 'sp_getPlanID'))[0][0]
 	# app.logger.info(plan_id)
 
-	# app.logger.info("plan id %s", plan_id)	
+	# app.logger.info("plan id %s", plan_id)
 
 	data = run_SP(user, day, s_proc= 'sp_getWorkout')
 
@@ -131,8 +201,8 @@ def showWorkout():
 	# muscle_group = "None"
 	# for x in data:
 	# 	if x[0] == plan_id:
-	# 		app.logger.info("plan id %s", plan_id)	
-	# 		app.logger.info("selected %s", x[0])	
+	# 		app.logger.info("plan id %s", plan_id)
+	# 		app.logger.info("selected %s", x[0])
 	# 		workout = x[2]
 	# 		muscle_group = x[1]
 	# 		break
@@ -141,7 +211,7 @@ def showWorkout():
 	muscle_group = data[0][1]
 
 	app.logger.info("muscle %s", muscle_group)
-	app.logger.info("workout data: %s", workout)		
+	app.logger.info("workout data: %s", workout)
 
 	try:
 		data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -159,7 +229,11 @@ def showWorkout():
 
 
 @app.route('/workoutDone')
+@login_required
 def workoutDone():
+	""" Clears out the planned workout when user clicks done!
+
+	"""
 
 	_user = request.cookies.get("current_user")
 	my_date = date.today()
@@ -168,11 +242,20 @@ def workoutDone():
 	return render_template('workout.html', workoutDone=True)
 
 @app.route("/news")
+@login_required
 def showNews():
+	""" Blank template for news page
+	"""
+
 	return render_template('news.html')
 
 @app.route("/goals")
+@login_required
 def showGoals():
+	""" Display user inputted goals and quotes
+
+	"""
+
 	user = request.cookies.get("current_user")
 	# 104 is the length of the motivation table
 	_id = random.randint(1,104)
@@ -191,23 +274,37 @@ def showGoals():
 	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_goal)
 
 @app.route("/update_goals",methods=['POST'])
+@login_required
 def updateGoals():
+	""" User can update weight and workout goals
+
+	"""
+
 	_weight_goal = request.form['weight']
 	_pr = request.form.getlist("pr")
 	app.logger.info(request.form.getlist("pr"))
 	_user = request.cookies.get("current_user")
-	_pr = list(map(int,_pr))
+	_pr = ','.join(_pr)
+	app.logger.info("_pr: %s", _pr)
 	# 1 = weightlifting, 2 = 5k
 	run_SP(_user,_pr,_weight_goal, s_proc="sp_editGoals")
 	return render_template('goals.html')
 
 @app.route("/edit_goals")
+@login_required
 def editGoals():
 	weights = ["Lose", "Maintain", "Gain"]
 	return render_template("edit_goals.html", weights = weights)
 
 @app.route("/profile")
+@login_required
 def showProfile():
+	""" shows user profile
+
+		displays values if the user has already given input
+
+	"""
+
 	_weight= _height= _age= _sex= bmr=bmi=tdee=disp_height=0
 	_user = request.cookies.get("current_user")
 	data = run_SP(_user, s_proc='sp_getProfile')
@@ -225,13 +322,21 @@ def showProfile():
 	return render_template('profile.html', user=_user, height = disp_height, weight = _weight, bmr=bmr, tdee=tdee, bmi=bmi)
 
 @app.route("/friends")
+@login_required
 def showFriends():
+	""" Blank template for friends page
+	"""
 	return render_template('friends.html')
 
 
 @app.route("/success")
 @app.route("/home")
+@login_required
 def homePage():
+		""" The first page a user lands on when they log in successfully
+
+			Shows a brienf overview of their fitness tracking and goals and progress
+		"""
 
 		## This is how you get the username
 		user = request.cookies.get("current_user")
@@ -242,26 +347,37 @@ def homePage():
 		#return render_template('home.html', day_calories=day_calories, user=user)
 		return render_template('home.html', user=user)
 
+@app.route("/signOut")
+def signOut():
+	""" Sign out and delte user cookies
+	"""
+
+	response = redirect('main')
+	response.delete_cookie("current_user")
+	return response
+
 @app.route("/showSignIn")
 def showSignIn():
-	#refresh user
-	#clean cookies
+	""" Show the sign in page to user
+	"""
+
 	response = redirect('home')
-	#response.set_cookie("current_user", '', max_age=0)
 	response.delete_cookie("current_user")
 	return render_template('signin.html')
 
 @app.route('/signIn',methods=['POST'])
 def signIn():
+		""" Take in the user's answers to sign in form
+
+		sets the user session up and creates user cookies for username
+
+		"""
 		#clean cookies
 		response = redirect('home')
 		#response.set_cookie("current_user", '', max_age=0)
 		response.delete_cookie("current_user")
 		# read the posted values from the UI
 		_name = request.form['inputName']
-		app.logger.info("!!!!$$This is the input name %s", _name)
-		response.set_cookie("current_user", _name, max_age=0)
-		#app.logger.info("input name len %d", len(_name))
 		_password = request.form['inputPassword']
 
 		# validate the received values
@@ -269,6 +385,7 @@ def signIn():
 				#_hashed_password = generate_password_hash(_password)
 				data = run_SP(_name, s_proc='sp_loginUser')
 				if len(data) == 0 :
+					app.logger.error("User trying to log in not found")
 					flash("This username is not found, try signing up")
 					return json.dumps({'error': 'this username is not found'})
 				if not check_password_hash(data[0][0], _password):
@@ -278,7 +395,6 @@ def signIn():
 				else:
 						## set the user cookies
 						response = redirect('home')
-						response.delete_cookie("current_user")
 						response.set_cookie("current_user", _name)
 						app.logger.info("setting name cookie %s", _name)
 						return response
@@ -289,15 +405,23 @@ def signIn():
 
 @app.route("/showSignUp")
 def showSignUp():
+	""" Show sign up form
+	"""
 	return render_template('signup.html')
 
 @app.route("/")
 @app.route("/main")
 def main():
+		""" SHows welcome page with signup button
+		"""
 		return render_template('index.html')
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
+		""" Allows user to create a new account
+			Sets session cookies for user
+		"""
+
 		#clean cookies
 		response = redirect('home')
 		response.set_cookie("current_user", '', max_age=0)
@@ -306,8 +430,16 @@ def signUp():
 		_email = request.form['inputEmail']
 		_password = request.form['inputPassword']
 
+
 		# validate the received values
 		if _name and _email and _password:
+				match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', \
+					_email)
+
+				if match == None:
+						flash("Invalid email address")
+						return json.dumps({'html':'<span>Enter the required fields</span>'})
+
 				_hashed_password = generate_password_hash(_password)
 
 				#save the user and password into the usr_tbl via sp_createUser stored proc.
@@ -321,6 +453,7 @@ def signUp():
 						app.logger.info("setting name cookie %s", request.cookies.get("current_user"))
 						return response
 				else:
+						flash("Username exists already :(")
 						app.logger.info("Unable to create user on mysql")
 						return json.dumps({'error':str(data[0])})
 		else:
@@ -334,8 +467,6 @@ if __name__ == "__main__":
 		# args = parser.parse_args()
 		# ## this next block would ideally be put into signup when we create users MFP accounts
 		# ## save the username and hashed password into the myfitnesspal API
-		# call(["myfitnesspal", "store-password", args.MFP_username])
-		# client = myfitnesspal.Client(args.MFP_username)
-
+		#call(["myfitnesspal", "store-password", "Danz1ty"])
 
 		app.run(debug=True)
