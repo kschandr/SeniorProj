@@ -246,8 +246,16 @@ def workoutDone():
 def showNews():
 	""" Blank template for news page
 	"""
+	user = request.cookies.get("current_user")
+	# 8 is the length of the motivation table
+	ids = random.sample(list(range(1,9)), 3)
+	
+	art1 = run_SP(ids[0], s_proc='sp_getArticle')
+	art2 = run_SP(ids[1], s_proc='sp_getArticle')
+	art3 = run_SP(ids[2], s_proc='sp_getArticle')
 
-	return render_template('news.html')
+	return render_template('news.html', art1=art1, art2=art2, art3=art3)
+
 
 @app.route("/goals")
 @login_required

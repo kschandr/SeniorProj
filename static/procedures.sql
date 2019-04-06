@@ -321,3 +321,20 @@ BEGIN
   select quote from motivation where id = id;
 END$$
 DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS sp_getArticle;
+DELIMITER $$
+CREATE PROCEDURE `sp_getArticle`(
+    IN num BIGINT
+)
+BEGIN
+  select art_name, author, content from news where id = num;
+END$$
+DELIMITER ;
+
+
+
+
+
+
