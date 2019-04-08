@@ -249,11 +249,15 @@ def showNews():
 	user = request.cookies.get("current_user")
 	# 8 is the length of the motivation table
 	ids = random.sample(list(range(1,9)), 3)
-	
+
 	art1 = run_SP(ids[0], s_proc='sp_getArticle')
 	art2 = run_SP(ids[1], s_proc='sp_getArticle')
 	art3 = run_SP(ids[2], s_proc='sp_getArticle')
 
+
+	'''art1 = [(a[0],a[1],a[2].replace("<br />","\n")) for a in art1]
+				art2 = [(a[0],a[1],a[2].replace("<br />","\n\n")) for a in art2]
+				art3 = [(a[0],a[1],a[2].replace("<br />","\n\n")) for a in art3]'''
 	return render_template('news.html', art1=art1, art2=art2, art3=art3)
 
 

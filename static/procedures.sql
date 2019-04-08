@@ -32,8 +32,15 @@ CREATE TABLE tbl_profile (
 );
 
 
-drop table if exists users;
+drop table if exists news;
 
+CREATE TABLE `news` (
+  `id` bigint(20) NOT NULL auto_increment,
+  `art_name` TINYTEXT CHARACTER SET utf8 DEFAULT NULL,
+  `author` TINYTEXT CHARACTER SET utf8 DEFAULT NULL,
+  `content` TEXT CHARACTER SET utf8 DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
 
 /*
 Stored procedures 
@@ -333,6 +340,18 @@ BEGIN
 END$$
 DELIMITER ;
 
+
+DROP PROCEDURE IF EXISTS sp_newArticle;
+DELIMITER $$
+CREATE PROCEDURE `sp_newArticle`(
+    in a_name tinytext,
+	in a_author tinytext,
+	in a_content text
+)
+BEGIN
+  insert into news(art_name, author, content)  values (a_name, a_author, a_content);
+END$$
+DELIMITER ;
 
 
 
