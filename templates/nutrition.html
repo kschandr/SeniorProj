@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Python Flask App</title>
+
+
+    <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/signup.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="home">Home</a>
+                    </li>
+                    <li role="presentation"><a href="nutrition">Nutrition</a>
+                    </li>
+                    <li role="presentation"><a href="workout">Workout</a>
+                    </li>
+                    <li role="presentation"><a href="goals">Goals</a>
+                    </li>
+                    <li role="presentation"><a href="profile">Profile</a>
+                    </li>
+                    <li role="presentation"><a href="news">News</a>
+                    </li>
+                    <li role="presentation"><a href="signOut">Sign Out</a>
+                    </li>
+                </ul>
+            </nav>
+            <h1>Nutrition</h1>
+        </div>
+
+        <div class="jumbotron">
+            <h2>Add Food</h2>
+        </div>
+
+
+        <div class="jumbotron">
+            <h2>What You Ate Today</h2>
+            <table>
+               <tr>
+                    <th><pre>Calories</pre></th>
+                    <td><pre>{{cal}}/{{cal_g}} kcal</pre></td>
+               </tr>
+               <tr>
+                    <th><pre>Carbohydrates</pre></th>
+                    <td><pre>{{carbs}}/{{carbs_g}} g</pre></td>
+               </tr>
+               <tr>
+                    <th><pre>Protein</pre></th>
+                    <td><pre>{{protein}}/{{protein_g}} g</pre></td>
+               </tr>
+
+               <tr>
+                    <th><pre>Fat</pre></th>
+                    <td><pre>{{fat}}/{{fat_g}} g </pre></td>
+               </tr>
+
+            </table>
+        </div>
+
+
+        <footer class="footer">
+            <p>&copy; O.K 2019</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>

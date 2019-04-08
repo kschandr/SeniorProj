@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Python Flask App</title>
+
+
+    <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/signup.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="home">Home</a>
+                    </li>
+                    <li role="presentation"><a href="nutrition">Nutrition</a>
+                    </li>
+                    <li role="presentation"><a href="workout">Workout</a>
+                    </li>
+                    <li role="presentation"><a href="goals">Goals</a>
+                    </li>
+                    <li role="presentation"><a href="profile">Profile</a>
+                    </li>
+                    <li role="presentation"><a href="news">News</a>
+                    </li>
+                    <li role="presentation"><a href="signOut">Sign Out</a>
+                    </li>
+                </ul>
+            </nav>
+            <h1>Workout</h1>
+        </div>
+
+
+
+        {% if not workout_done %}
+        <div class="jumbotron">
+            <h2>Today's Workout</h2>
+            <table>
+               <tr>
+                    <th>{{muscle_group}} Exercise</th>
+               </tr>
+               <tr>
+                    <td><pre>{{workout}}</pre></td>
+               </tr>
+               <tr> <a href="workoutDone">Done!</a> </tr>
+            </table>
+        </div>
+
+
+
+
+
+        {% else %}
+        <div class="jumbotron">
+            <h2>Congratulations!</h2>
+            <table>
+               <tr>
+                    <th>You finished today's workout!</th>
+               </tr>
+               <tr>
+                    <td><pre>Remember to hydrate and rest!</pre></td>
+               </tr>
+            </table>
+        </div>
+        {% endif %}
+
+
+        <div class="jumbotron">
+        <h2>Motivation</h2>
+        <table>
+
+           <tr>
+                <th>{{quote}}</th>
+           </tr>
+
+        </table>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; O.K 2019</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>

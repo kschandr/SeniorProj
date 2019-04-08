@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Python Flask App</title>
+
+
+    <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
+    <link href="../static/signup.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="home">Home</a>
+                    </li>
+                    <li role="presentation"><a href="nutrition">Nutrition</a>
+                    </li>
+                    <li role="presentation"><a href="workout">Workout</a>
+                    </li>
+                    <li role="presentation"><a href="goals">Goals</a>
+                    </li>
+                    <li role="presentation"><a href="profile">Profile</a>
+                    </li>
+                    <li role="presentation"><a href="news">News</a>
+                    </li>
+                    <li role="presentation"><a href="signOut">Sign Out</a>
+                    </li>
+                </ul>
+            </nav>
+            <h1>Goals</h1>
+
+        </div>
+
+        <div class="jumbotron">
+        <h2>Weight Goal</h2>
+        <a href="edit_goals">Edit</a>
+
+        <table>
+           <tr>
+                <th>{{weight_goal}} weight</th>
+           </tr>
+     <!--       <tr>
+                <td> Goal Weight: lbs , Current: lbs</td>
+           </tr> -->
+        </table></div>
+
+        <div class="jumbotron">
+        <h2>PR Goal</h2>
+
+        <table>
+          {%if run_bool %}
+            <tr>
+                <th>Running Goal</th>
+                <td>Best 5km Time: </td>
+            </tr>
+          {% endif %}
+          {%if lift_bool %}
+            <tr>
+                    <th>Weightlifting Goal</th>
+                    <td>Bench PR: </td>
+                    <td>Squat PR:</td>
+                    <td>Deadlift PR:</td>
+            </tr>
+          {% endif %}
+        </table></div>
+
+        <div class="jumbotron">
+        <h2>Motivation</h2>
+        <table>
+
+           <tr>
+                <th>{{quote}}</th>
+           </tr>
+
+        </table>
+        </div>
+
+
+        <footer class="footer">
+            <p>&copy; O.K 2019</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>

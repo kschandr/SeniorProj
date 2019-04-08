@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Python Flask App</title>
+
+
+    <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
+    <script src="../static/js/jquery-3.1.0.min.js"></script>
+    <script src="../static/js/edit_done_goal.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="home">Home</a>
+                    </li>
+                    <li role="presentation"><a href="nutrition">Nutrition</a>
+                    </li>
+                    <li role="presentation"><a href="workout">Workout</a>
+                    </li>
+                    <li role="presentation"><a href="goals">Goals</a>
+                    </li>
+                    <li role="presentation"><a href="profile">Profile</a>
+                    </li>
+                    <li role="presentation"><a href="news">News</a>
+                    </li>
+                    <li role="presentation"><a href="signOut">Sign Out</a>
+                    </li>
+                </ul>
+            </nav>
+            <h1>Goals</h1>
+
+        </div>
+
+        <div class="jumbotron">
+        <h2>Goals</h2>
+        <form class="form-update">
+        <table>
+           <tr>
+                <th>Weight Goals</th>
+                <td> <select name= "weight">
+                        {% for w in weights %}
+                        <option value= "{{w}}" SELECTED>{{w}}</option>"
+                        {% endfor %}
+                    </select></td>
+           </tr>
+           <tr>
+                <th>PR Goal</th>
+                <td>
+                    <input type="checkbox" name="pr" value="1"checked>
+                    <label>Bench/Squat/Deadlift</label>
+                </td>
+                <td>
+                    <input type="checkbox" name="pr" value="2" checked>
+                    <label>5K Time</label>
+                </td>
+           </tr>
+
+        </table>
+
+        <button id="edit_done_goal" class="btn btn-sm btn-primary" type="button">Done</button>
+
+        </form>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; O.K 2019</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>

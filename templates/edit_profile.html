@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Python Flask App</title>
+
+
+    <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
+    <script src="../static/js/jquery-3.1.0.min.js"></script>
+    <script src="../static/js/edit_done.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="home">Home</a>
+                    </li>
+                    <li role="presentation"><a href="nutrition">Nutrition</a>
+                    </li>
+                    <li role="presentation"><a href="workout">Workout</a>
+                    </li>
+                    <li role="presentation"><a href="goals">Goals</a>
+                    </li>
+                    <li role="presentation"><a href="profile">Profile</a>
+                    </li>
+                    <li role="presentation"><a href="news">News</a>
+                    </li>
+                    <li role="presentation"><a href="signOut">Sign Out</a>
+                    </li>
+                </ul>
+            </nav>
+            <h1>Profile</h1>
+
+        </div>
+
+        <div class="jumbotron">
+        <h2>Personal Info</h2>
+        <form class="form-update">
+        <table>
+
+           <tr>
+                <th>Weight</th>
+                <td> <input name="weight" id="weight" class="form-control" placeholder="weight in pounds"> </td>
+           </tr>
+           <tr>
+                <th>Height</th>
+                <td> <select name= "height">
+                        {% for h in heights %}
+                        <option value= "{{h}}" SELECTED>{{h}}</option>"
+                        {% endfor %}
+                    </select></td>
+           </tr>
+           <tr>
+                <th>Age</th>
+                <td> <input name="age" id="age" class="form-control" placeholder="age"> </td>
+           </tr>
+           <tr>
+                <th>Sex</th>
+                <td> <input type="radio" name="sex" id="male" class="form-control" value="male"> Male </input><br></td>
+                <td><input type="radio" name="sex" id="female" class="form-control" value="female"> Female </input><br></td>
+           </tr>
+           <tr>
+                <th>Activity Level</th>
+                <td><select name="activity">
+                    {% for a in activities %}
+                    <option value="{{a}}" SELECTED>{{a}}</option>
+                    {% endfor %}
+                </select>
+                </td>
+           </tr>
+
+        </table>
+
+        <button id="edit_done" class="btn btn-sm btn-primary" type="button">Done</button>
+
+        </form>
+        </div>
+
+        <div class="jumbotron">
+        <h2>Health Statistics</h2>
+        <table>
+
+           <tr>
+                <th>TDEE</th>
+                <td>  </td>
+           </tr>
+           <tr>
+                <th>BMI</th>
+                <td>  </td>
+           </tr>
+
+        </table>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; O.K 2019</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>

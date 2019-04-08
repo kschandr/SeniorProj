@@ -1,25 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
-    {% for message in messages %}
-      <div class="error">{{ message }}</div>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
+
   <head>
-    <title>Python Flask App</title>
+    <title>Sign In!</title>
 
 
     <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
     <link href="../static/signup.css" rel="stylesheet">
 
     <script src="../static/js/jquery-3.1.0.min.js"></script>
-    <script src="../static/js/signUp.js"></script>
+    <script src="../static/js/signIn.js"></script>
 
   </head>
+
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+    <div class="error">{{ message }}
+    </div>
+
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
 
   <body>
 
@@ -36,17 +40,14 @@
       </div>
 
       <div class="jumbotron">
-        <h1>Sign Up</h1>
+        <h1>Sign In</h1>
         <form class="form-signin">
-        <label for="inputName" class="sr-only">Name</label>
+        <label for="inputName" class="sr-only">Username</label>
         <input type="name" name="inputName" id="inputName" class="form-control" placeholder="Username" required autofocus>
-        <label for="inputEmail" class="sr-only">Email address</label>
-        <input type="email" name="inputEmail" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
         <label for="inputPassword" class="sr-only">Password</label>
         <input type="password" name="inputPassword" id="inputPassword" class="form-control" placeholder="Password" required>
-
-        <button id="btnSignUp" class="btn btn-lg btn-primary btn-block" type="button">Sign up</button>
-      </form>
+        <button id="btnSignIn" class="btn btn-lg btn-primary btn-block" type="button">Sign In</button>
+        </form>
       </div>
 
 
