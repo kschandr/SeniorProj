@@ -1,5 +1,5 @@
 import logging,sys,argparse, random, re
-# import myfitnesspal
+import myfitnesspal
 from flask import Flask, render_template,json,request, redirect, url_for, flash
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
@@ -8,6 +8,7 @@ from helper import *
 import datetime
 from datetime import date
 import calendar
+from math import ceil
 
 app = Flask(__name__)
 # To use session dictionary, make sure to have app secret key
@@ -23,9 +24,49 @@ app.config['MYSQL_DATABASE_HOST'] = 'ambari-head.csc.calpoly.edu'
 mysql.init_app(app)
 
 
-# client = myfitnesspal.Client("Danz1ty")
+client = myfitnesspal.Client("Danz1ty")
 
 
+
+PER_PAGE = 10
+
+class Pagination(object):
+
+		def __init__(self, page, per_page, total_count):
+				self.page = page
+				self.per_page = per_page
+				self.total_count = total_count
+
+		@property
+		def pages(self):
+				return int(ceil(self.total_count / float(self.per_page)))
+
+		@property
+		def has_prev(self):
+				return self.page > 1
+
+		@property
+		def has_next(self):
+				return self.page < self.pages
+
+		def iter_pages(self, left_edge=2, left_current=2,
+									 right_current=5, right_edge=2):
+				last = 0
+				for num in xrange(1, self.pages + 1):
+						if num <= left_edge or \
+							 (num > self.page - left_current - 1 and \
+								num < self.page + right_current) or \
+							 num > self.pages - right_edge:
+								if last + 1 != num:
+										yield None
+								yield num
+								last = num
+
+"""
+------------------------------------
+Auxiliary Methods
+------------------------------------
+"""
 def run_SP(*args, s_proc=None,):
 	""" Runs the stored procedure
 
@@ -55,8 +96,6 @@ def run_SP(*args, s_proc=None,):
 	conn.close()
 	return data
 
-
-
 def login_required(function_to_protect):
 		"""Is a wrapper to ensure user is logged into a session
 
@@ -85,6 +124,20 @@ def login_required(function_to_protect):
 		return a_wrapper_accepting_arguments
 
 
+
+"""
+-----------------------------------
+App Main Functions
+-----------------------------------
+"""
+
+
+
+'''
+-------
+PROFILE PAGE
+-------
+'''
 @app.route('/update_profile',methods=['POST'])
 @login_required
 def updateProfile():
@@ -123,33 +176,6 @@ def updateProfile():
 
 		return redirect('home')
 
-
-
-@app.route("/nutrition")
-@login_required
-def showNutrition():
-	""" Shows the calories and macros user has inputted
-
-	Dependent on MFP account
-
-	"""
-	app.logger.info("date today: %s", date.today())
-
-	# my_date = date.today() - datetime.timedelta(days = 1)
-	# day = client.get_date(my_date.year, my_date.month, my_date.day)
-	# res = client.get_food_search_results("bacon cheeseburger")
-	# app.logger.info("nutrition: \n%s", res)
-	# r = list(map(lambda x: (x, x.mfp_id), res))
-	# app.logger.info(r)
-	# goal_dict = day.goals
-	# cal_dict = day.totals
-	# return render_template('nutrition.html', cal=cal_dict.get('calories'), cal_g=goal_dict.get('calories'),\
-	# 			protein=cal_dict.get('protein'), protein_g=goal_dict.get('protein'), fat=cal_dict.get('fat'),\
-	# 			fat_g=goal_dict.get('fat'), carbs=cal_dict.get('carbohydrates'), carbs_g=goal_dict.get('carbohydrates'))
-
-	return render_template('nutrition.html')
-
-
 @app.route("/edit_profile")
 @login_required
 def showEditProfile():
@@ -166,6 +192,76 @@ def showEditProfile():
 							"Extremely Active (very heavy exercise/ physical job/ training twice a day)"]
 	heights = [str(feet) + "'" + str(inch) for feet in range(4,7) for inch in range(0,12)][8:]
 	return render_template('edit_profile.html', user=user, heights = heights, activities=activities)
+
+@app.route("/profile")
+@login_required
+def showProfile():
+	""" shows user profile
+
+		displays values if the user has already given input
+
+	"""
+
+	_weight= _height= _age= _sex= bmr=bmi=tdee=disp_height=0
+	_user = request.cookies.get("current_user")
+	data = run_SP(_user, s_proc='sp_getProfile')
+	app.logger.info("data: %s", data)
+	#app.logger.info("data %s", data[0][0])
+	#_weight = data.weight
+	#_height = data.height
+	if data[0][0]:
+		_weight, _height,_age,_sex,_activity = data[0]
+		disp_height = convertInchesToFeet(_height)
+		app.logger.info("_activity from profile: %s", _activity)
+		bmr = calcBMR(_height,_weight,_age,_sex)
+		tdee = calcTDEE(bmr, _activity)
+		bmi = calcBMI(_height,_weight)
+	return render_template('profile.html', user=_user, height = disp_height, weight = _weight, bmr=bmr, tdee=tdee, bmi=bmi)
+
+
+
+'''
+----
+NUTRITION PAGE
+---
+'''
+@app.route("/nutrition")
+@login_required
+def showNutrition():
+	""" Shows the calories and macros user has inputted
+
+	Dependent on MFP account
+
+	"""
+	app.logger.info("date today: %s", date.today())
+
+	my_date = date.today()
+	day = client.get_date(my_date.year, my_date.month, my_date.day)
+	res = client.get_food_search_results("bacon cheeseburger")
+	app.logger.info("nutrition: \n%s", res)
+	f = res[0]
+	app.logger.info("{} ({}), {}, cals={}, mfp_id={}".format(\
+		f.name,\
+		f.brand,\
+		f.serving,\
+		f.calories,\
+		f.mfp_id))
+	# r = list(map(lambda x: (x, x.mfp_id), res))
+	# app.logger.info(r)
+	# goal_dict = day.goals
+	# cal_dict = day.totals
+	# return render_template('nutrition.html', cal=cal_dict.get('calories'), cal_g=goal_dict.get('calories'),\
+	# 			protein=cal_dict.get('protein'), protein_g=goal_dict.get('protein'), fat=cal_dict.get('fat'),\
+	# 			fat_g=goal_dict.get('fat'), carbs=cal_dict.get('carbohydrates'), carbs_g=goal_dict.get('carbohydrates'))
+
+	return render_template('nutrition.html')
+
+
+'''
+------
+WORKOUT PAGE
+------
+'''
 
 @app.route("/workout")
 @login_required
@@ -227,7 +323,6 @@ def showWorkout():
 
 	return render_template('workout.html', quote=quote, workout=workout, muscle_group=muscle_group, workout_done=workout_done)
 
-
 @app.route('/workoutDone')
 @login_required
 def workoutDone():
@@ -241,6 +336,13 @@ def workoutDone():
 
 	return render_template('workout.html', workoutDone=True)
 
+
+
+'''
+-----
+NEWS PAGE
+-----
+'''
 @app.route("/news")
 @login_required
 def showNews():
@@ -253,14 +355,15 @@ def showNews():
 	art1 = run_SP(ids[0], s_proc='sp_getArticle')
 	art2 = run_SP(ids[1], s_proc='sp_getArticle')
 	art3 = run_SP(ids[2], s_proc='sp_getArticle')
-
-
-	'''art1 = [(a[0],a[1],a[2].replace("<br />","\n")) for a in art1]
-				art2 = [(a[0],a[1],a[2].replace("<br />","\n\n")) for a in art2]
-				art3 = [(a[0],a[1],a[2].replace("<br />","\n\n")) for a in art3]'''
 	return render_template('news.html', art1=art1, art2=art2, art3=art3)
 
 
+
+'''
+-----
+GOALS PAGE
+-----
+'''
 @app.route("/goals")
 @login_required
 def showGoals():
@@ -308,39 +411,13 @@ def editGoals():
 	weights = ["Lose", "Maintain", "Gain"]
 	return render_template("edit_goals.html", weights = weights)
 
-@app.route("/profile")
-@login_required
-def showProfile():
-	""" shows user profile
-
-		displays values if the user has already given input
-
-	"""
-
-	_weight= _height= _age= _sex= bmr=bmi=tdee=disp_height=0
-	_user = request.cookies.get("current_user")
-	data = run_SP(_user, s_proc='sp_getProfile')
-	app.logger.info("data: %s", data)
-	#app.logger.info("data %s", data[0][0])
-	#_weight = data.weight
-	#_height = data.height
-	if data[0][0]:
-		_weight, _height,_age,_sex,_activity = data[0]
-		disp_height = convertInchesToFeet(_height)
-		app.logger.info("_activity from profile: %s", _activity)
-		bmr = calcBMR(_height,_weight,_age,_sex)
-		tdee = calcTDEE(bmr, _activity)
-		bmi = calcBMI(_height,_weight)
-	return render_template('profile.html', user=_user, height = disp_height, weight = _weight, bmr=bmr, tdee=tdee, bmi=bmi)
-
-@app.route("/friends")
-@login_required
-def showFriends():
-	""" Blank template for friends page
-	"""
-	return render_template('friends.html')
 
 
+'''
+----------
+HOME PAGE
+----------
+'''
 @app.route("/success")
 @app.route("/home")
 @login_required
@@ -413,7 +490,6 @@ def signIn():
 		else:
 				app.logger.error("incomplete signin")
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
-
 
 @app.route("/showSignUp")
 def showSignUp():
