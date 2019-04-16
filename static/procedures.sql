@@ -42,6 +42,16 @@ CREATE TABLE `news` (
   PRIMARY KEY (`id`)
 );
 
+drop table if exists food;
+create table food(
+	id bigint(10) auto_increment,
+	username varchar(45) not null,
+    food_id int(20) not null,
+    input_date DATE not null,
+    primary key (id)
+);
+
+
 /*
 Stored procedures 
 */
