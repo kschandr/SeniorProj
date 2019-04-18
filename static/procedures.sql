@@ -31,6 +31,44 @@ CREATE TABLE tbl_profile (
   PRIMARY KEY (username)
 );
 
+drop table if exists tbl_goals;
+CREATE TABLE `tbl_goals` (
+  `username` varchar(45) NOT NULL,
+  `lift` tinyint(1) DEFAULT '0',
+  `run_5k` tinyint(1) DEFAULT '0',
+  `weight_goal` varchar(45) DEFAULT 'Maintain'
+);
+
+drop table if exists motivation;
+CREATE TABLE `motivation` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `quote` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+drop table if exists plans;
+CREATE TABLE `plans` (
+  `goal` varchar(20) NOT NULL,
+  `day` varchar(10) NOT NULL,
+  `id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`goal`,`day`)
+);
+
+drop table if exists workout_complete;
+CREATE TABLE `workout_complete` (
+  `username` varchar(45) NOT NULL,
+  `day` varchar(60) NOT NULL,
+  PRIMARY KEY (`username`,`day`)
+);
+
+drop table if exists exercises;
+CREATE TABLE `exercises` (
+  `id` bigint(20) NOT NULL,
+  `muscle_group` varchar(20) DEFAULT NULL,
+  `workout` varchar(1000) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
 
 drop table if exists news;
 
@@ -53,15 +91,17 @@ create table food(
 
 drop table if exists macros;
 CREATE TABLE `macros` (
-  `id` bigint(10) NOT NULL AUTO_INCREMENT,
   `username` varchar(45) NOT NULL,
   `today` date NOT NULL,
   `calories` bigint(20) NOT NULL,
   `protein` bigint(20) NOT NULL,
   `fat` bigint(20) NOT NULL,
   `carb` bigint(20) NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (username,today)
 ); 
+
+
+
 /*
 Stored procedures 
 */
@@ -349,7 +389,6 @@ BEGIN
 END$$
 DELIMITER ;
 
-
 DROP PROCEDURE IF EXISTS sp_getArticle;
 DELIMITER $$
 CREATE PROCEDURE `sp_getArticle`(
@@ -372,6 +411,18 @@ BEGIN
   insert into news(art_name, author, content)  values (a_name, a_author, a_content);
 END$$
 DELIMITER ;
+
+drop procedure if exists sp_addFood;
+delimiter $$
+CREATE  PROCEDURE `sp_addFood`(
+in username varchar(45),
+in mfp_id bigint(20),
+in today date /*yyyy-mm-dd*/
+)
+begin
+	insert into food(username,food_id, input_date) values (username, mfp_id, today);
+end $$
+delimiter ;
 
 
 DROP procedure if exists sp_updateMacros;
@@ -404,6 +455,6 @@ in username varchar(45),
 in today date
 )
 begin 
-	select cals,protein,fat,carb from macros where username=username and today = today;
+	select calories,protein,fat,carb from macros where username=username and today = today;
 end $$
 delimiter ;

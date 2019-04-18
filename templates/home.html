@@ -38,17 +38,26 @@
             <h2> Hi, {{user}}! </h2>
             <div class="jumbotron">
             <h2>Calories</h2>
+            {{calories}}
 
             </table>
             </div>
             <div class="jumbotron">
             <h2>Today's Workout</h2>
+            {% if workout=="rest" %}
+                Lucky you! It's rest day, so kick back and relax
+            {% elif done %}
+                Congratulations!! You finished today's workout
+            {% else %}
+                Today, we'll focus on {{workout}}!
+            {% endif %}
             </div>
             <div class="jumbotron">
             <h2>Graphs</h2>
             </div>
             <div class="jumbotron">
             <h2>Motivation</h2>
+            {{quote}}
             </div>
 
 

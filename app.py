@@ -131,7 +131,9 @@ def login_required(function_to_protect):
 		a_wrapper_accepting_arguments.__name__ = function_to_protect.__name__
 		return a_wrapper_accepting_arguments
 
-
+def getMacros(food_id):
+	data = client.get_food_item_details(food_id)
+	return (data.calories,data.protein,data.fat,data.carbohydrates)
 
 """
 -----------------------------------
@@ -310,6 +312,7 @@ def addFood():
 	for food_id in foods:
 		app.logger.info("food id: %s",food_id)
 		run_SP(user,food_id,today,s_proc="sp_addFood")
+		run_SP(user,today, *(getMacros(food_id)),s_proc="sp_updateMacros")
 	return render_template("nutrition.html")
 
 
@@ -481,17 +484,37 @@ HOME PAGE
 def homePage():
 		""" The first page a user lands on when they log in successfully
 
-			Shows a brienf overview of their fitness tracking and goals and progress
+			Shows a brief overview of their fitness tracking and goals and progress
 		"""
 
 		## This is how you get the username
 		user = request.cookies.get("current_user")
-		app.logger.info("This is the home page. Current user: %s", user)
+		#app.logger.info("This is the home page. Current user: %s", user)
+		macros = run_SP(user, today, s_proc="sp_getMacros")
+		app.logger.info(macros[0])
+		_id = random.randint(1,104)
+		quote = run_SP(_id, s_proc='sp_getQuote')
+		app.logger.info(quote[0][0])
+		my_date = date.today()
+		day = calendar.day_name[my_date.weekday()]
+		muscle_group = run_SP(user, day, s_proc= 'sp_getWorkout')[0][1]
+
+		try:
+			data = run_SP(user, my_date, s_proc='sp_getCompletion')
+			app.logger.info(data)
+			done = data[0][0]
+			if done == "done":
+				workout_done = True
+			else:
+				workout_done = False
+			#super janky try/except block... should change
+		except IndexError:
+			workout_done = False
 		## stores totals in calories, macros (dict form)
 		#day_calories = client.get_date(2019,2,2).totals
 		#app.logger.info("user day calories: %d", day_calories)
 		#return render_template('home.html', day_calories=day_calories, user=user)
-		return render_template('home.html', user=user)
+		return render_template('home.html', user=user,calories=macros[0][0],quote=quote[0][0],workout=muscle_group,done=workout_done)
 
 @app.route("/signOut")
 def signOut():
