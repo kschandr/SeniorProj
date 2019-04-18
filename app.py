@@ -9,6 +9,14 @@ import datetime
 from datetime import date
 import calendar
 from math import ceil
+from wtforms import Form, StringField, SelectField
+
+
+"""
+Requirements:
+pip install myfitnesspal
+pip install Flask-WTF
+"""
 
 app = Flask(__name__)
 # To use session dictionary, make sure to have app secret key
@@ -25,7 +33,7 @@ mysql.init_app(app)
 
 
 client = myfitnesspal.Client("Danz1ty")
-
+today = date.today().strftime('%Y-%m-%d')
 
 
 PER_PAGE = 10
@@ -233,28 +241,77 @@ def showNutrition():
 	Dependent on MFP account
 
 	"""
-	app.logger.info("date today: %s", date.today())
 
-	my_date = date.today()
-	day = client.get_date(my_date.year, my_date.month, my_date.day)
-	res = client.get_food_search_results("bacon cheeseburger")
-	app.logger.info("nutrition: \n%s", res)
-	f = res[0]
-	app.logger.info("{} ({}), {}, cals={}, mfp_id={}".format(\
-		f.name,\
-		f.brand,\
-		f.serving,\
-		f.calories,\
-		f.mfp_id))
+	username = request.cookies.get("current_user")
+	data = run_SP(username, today, s_proc="sp_getTodayFood")
+	carb = fat = protein = cals =0
+	#app.logger.info("data: %s", data)
+	for food_id in [d[0] for d in data]:
+		app.logger.info("food _id in show %s" , food_id)
+		food = client.get_food_item_details(food_id)
+		fat += round(food.fat,2)
+		protein += round(food.protein,2)
+		carb += round(food.carbohydrates,2)
+		cals += round(food.calories,2)
+	run_SP(username,today,cals,protein,fat,carb,s_proc="sp_updateMacros")
+
+	# res = client.get_food_search_results("bacon cheeseburger")
+	# app.logger.info("nutrition: \n%s", res)
+	# f = res[0]
+	# app.logger.info("{} ({}), {}, cals={}, mfp_id={}".format(\
+	# 	f.name,\
+	# 	f.brand,\
+	# 	f.serving,\
+	# 	f.calories,\
+	# 	f.mfp_id))
 	# r = list(map(lambda x: (x, x.mfp_id), res))
 	# app.logger.info(r)
 	# goal_dict = day.goals
 	# cal_dict = day.totals
-	# return render_template('nutrition.html', cal=cal_dict.get('calories'), cal_g=goal_dict.get('calories'),\
-	# 			protein=cal_dict.get('protein'), protein_g=goal_dict.get('protein'), fat=cal_dict.get('fat'),\
-	# 			fat_g=goal_dict.get('fat'), carbs=cal_dict.get('carbohydrates'), carbs_g=goal_dict.get('carbohydrates'))
+	return render_template('nutrition.html', cal=cals, protein=protein, fat=fat,carbs=carb)
 
-	return render_template('nutrition.html')
+	#return render_template('nutrition.html')
+
+class FoodSearch(Form):
+	 search = StringField('')
+
+@app.route("/searchFood", methods=['GET', 'POST'])
+@login_required
+def searchFood():
+	"""
+	Allows user to search and add food to their day
+
+	Requires MFP
+	"""
+	search = FoodSearch(request.form)
+	if request.method == 'POST':
+				return searchResults(search)
+	return render_template("foodsearch.html", form=search)
+
+
+@app.route('/results')
+def searchResults(search):
+		search_string = search.data['search']
+		res = client.get_food_search_results(search_string)
+
+		if not res:
+				flash('No results found!')
+				return redirect('/nutrition')
+		else:
+				# display results
+				#app.logger.info("results: \n%s", res)
+				return render_template('foodsearch.html', form=search, res=res[:10])
+
+@app.route('/addFood', methods=['POST'])
+def addFood():
+	foods = request.form.getlist("foodSelection")
+	user = request.cookies.get("current_user")
+	app.logger.info("foods len %d", len(foods))
+	for food_id in foods:
+		app.logger.info("food id: %s",food_id)
+		run_SP(user,food_id,today,s_proc="sp_addFood")
+	return render_template("nutrition.html")
+
 
 
 '''
