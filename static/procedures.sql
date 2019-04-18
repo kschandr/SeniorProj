@@ -51,7 +51,17 @@ create table food(
     primary key (id)
 );
 
-
+drop table if exists macros;
+CREATE TABLE `macros` (
+  `id` bigint(10) NOT NULL AUTO_INCREMENT,
+  `username` varchar(45) NOT NULL,
+  `today` date NOT NULL,
+  `calories` bigint(20) NOT NULL,
+  `protein` bigint(20) NOT NULL,
+  `fat` bigint(20) NOT NULL,
+  `carb` bigint(20) NOT NULL,
+  PRIMARY KEY (`id`)
+); 
 /*
 Stored procedures 
 */
@@ -364,6 +374,36 @@ END$$
 DELIMITER ;
 
 
+DROP procedure if exists sp_updateMacros;
+delimiter $$
+CREATE PROCEDURE `sp_updateMacros`(
+in username varchar(45),
+in today date,
+in cals bigint(20),
+in protein bigint(20),
+in fat bigint(20),
+in carb bigint(20)
+)
+begin 
+  if ( select exists (select 1 from macros where username=username and today=today)) 
+  
+  THEN 	update macros 
+		SET calories = cals, protein=protein, fat = fat, carb =carb 
+		WHERE username = username and today=today;
+        
+  ELSE 	insert into macros(username, today,calories,protein,fat,carb) 
+		values(username,today, cals,protein,fat,carb);
+end if;
+end $$
+delimiter ;
 
-
-
+drop procedure if exists sp_getMacros;
+delimiter $$
+create procedure `sp_getMacros`(
+in username varchar(45),
+in today date
+)
+begin 
+	select cals,protein,fat,carb from macros where username=username and today = today;
+end $$
+delimiter ;
