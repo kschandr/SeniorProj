@@ -216,9 +216,6 @@ def showProfile():
 	_user = request.cookies.get("current_user")
 	data = run_SP(_user, s_proc='sp_getProfile')
 	app.logger.info("data: %s", data)
-	#app.logger.info("data %s", data[0][0])
-	#_weight = data.weight
-	#_height = data.height
 	if data[0][0]:
 		_weight, _height,_age,_sex,_activity = data[0]
 		disp_height = convertInchesToFeet(_height)
@@ -257,19 +254,6 @@ def showNutrition():
 		cals += round(food.calories,2)
 	run_SP(username,today,cals,protein,fat,carb,s_proc="sp_updateMacros")
 
-	# res = client.get_food_search_results("bacon cheeseburger")
-	# app.logger.info("nutrition: \n%s", res)
-	# f = res[0]
-	# app.logger.info("{} ({}), {}, cals={}, mfp_id={}".format(\
-	# 	f.name,\
-	# 	f.brand,\
-	# 	f.serving,\
-	# 	f.calories,\
-	# 	f.mfp_id))
-	# r = list(map(lambda x: (x, x.mfp_id), res))
-	# app.logger.info(r)
-	# goal_dict = day.goals
-	# cal_dict = day.totals
 	return render_template('nutrition.html', cal=cals, protein=protein, fat=fat,carbs=carb)
 
 	#return render_template('nutrition.html')
@@ -312,7 +296,7 @@ def addFood():
 	for food_id in foods:
 		app.logger.info("food id: %s",food_id)
 		run_SP(user,food_id,today,s_proc="sp_addFood")
-		run_SP(user,today, *(getMacros(food_id)),s_proc="sp_updateMacros")
+		#run_SP(user,today, *(getMacros(food_id)),s_proc="sp_updateMacros")
 	return render_template("nutrition.html")
 
 
@@ -343,31 +327,11 @@ def showWorkout():
 	app.logger.info("today's day: %s", day)
 	app.logger.info("user: %s", user)
 
-	# plan_id = (run_SP(user, day, s_proc= 'sp_getPlanID'))[0][0]
-	# app.logger.info(plan_id)
-
-	# app.logger.info("plan id %s", plan_id)
-
 	data = run_SP(user, day, s_proc= 'sp_getWorkout')
-
-	app.logger.info(data)
-	app.logger.info("workout data: %s", data)
-
-	# workout = "None"
-	# muscle_group = "None"
-	# for x in data:
-	# 	if x[0] == plan_id:
-	# 		app.logger.info("plan id %s", plan_id)
-	# 		app.logger.info("selected %s", x[0])
-	# 		workout = x[2]
-	# 		muscle_group = x[1]
-	# 		break
 
 	workout = data[0][0]
 	muscle_group = data[0][1]
 
-	app.logger.info("muscle %s", muscle_group)
-	app.logger.info("workout data: %s", workout)
 
 	try:
 		data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -381,7 +345,8 @@ def showWorkout():
 	except IndexError:
 		workout_done = False
 
-	return render_template('workout.html', quote=quote, workout=workout, muscle_group=muscle_group, workout_done=workout_done)
+	return render_template('workout.html', quote=quote, workout=workout,
+				muscle_group=muscle_group, workout_done=workout_done)
 
 @app.route('/workoutDone')
 @login_required
@@ -514,7 +479,8 @@ def homePage():
 		#day_calories = client.get_date(2019,2,2).totals
 		#app.logger.info("user day calories: %d", day_calories)
 		#return render_template('home.html', day_calories=day_calories, user=user)
-		return render_template('home.html', user=user,calories=macros[0][0],quote=quote[0][0],workout=muscle_group,done=workout_done)
+		return render_template('home.html', user=user,calories=macros[0][0],
+						quote=quote[0][0],workout=muscle_group,done=workout_done)
 
 @app.route("/signOut")
 def signOut():
