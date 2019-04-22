@@ -6,7 +6,7 @@ from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
 from helper import *
 import datetime
-from datetime import date
+from datetime import date, datetime, timedelta
 import calendar
 from math import ceil
 from wtforms import Form, StringField, SelectField
@@ -456,7 +456,7 @@ def homePage():
 		user = request.cookies.get("current_user")
 		#app.logger.info("This is the home page. Current user: %s", user)
 		macros = run_SP(user, today, s_proc="sp_getMacros")
-		app.logger.info("MACROS:", macros)
+		#app.logger.info("MACROS:", macros)
 		# if macros == ():
 		# 	macros = []
 		# 	macros[0] = [0,0,0]
@@ -482,10 +482,28 @@ def homePage():
 		app.logger.info(day)
 		data = run_SP(user, day, s_proc='sp_getMacros')
 		app.logger.info(data)
-		protein = data[0][0]
-		carb = data[0][1]
-		fat = data[0][2]
+		protein = data[0][1]
+		carb = data[0][2]
+		fat = data[0][3]
 		pie_values = [protein, carb, fat]
+
+
+		cals = []
+		dates = []
+		for N in [6, 5, 4, 3, 2, 1, 0]:
+			day = (datetime.now() - timedelta(days=N)).date()
+			dates.append(day)
+			info = run_SP(user, day, s_proc='sp_getMacros')
+			app.logger.info(info)
+			if info != [] and info != ():
+				cal = info[0][0]
+				app.logger.info(cal)
+				cals.append(cal)
+			else:
+				cals.append(0)
+		app.logger.info(cals)
+
+
 
 
 		try:
@@ -504,7 +522,9 @@ def homePage():
 		#app.logger.info("user day calories: %d", day_calories)
 		#return render_template('home.html', day_calories=day_calories, user=user)
 		return render_template('home.html', user=user,calories=macros[0][0],
-						quote=quote[0][0],workout=muscle_group,done=workout_done, title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
+						quote=quote[0][0],workout=muscle_group,done=workout_done, 
+						g1_title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors),
+							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(cals)+500))
 
 @app.route("/signOut")
 def signOut():
