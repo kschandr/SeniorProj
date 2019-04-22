@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Python Flask App</title>
+
+
+    <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
+    <script src="../static/js/jquery-3.1.0.min.js"></script>
+    <script src="../static/js/addFood.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="home">Home</a>
+                    </li>
+                    <li role="presentation"><a href="nutrition">Nutrition</a>
+                    </li>
+                    <li role="presentation"><a href="workout">Workout</a>
+                    </li>
+                    <li role="presentation"><a href="goals">Goals</a>
+                    </li>
+                    <li role="presentation"><a href="profile">Profile</a>
+                    </li>
+                    <li role="presentation"><a href="news">News</a>
+                    </li>
+                    <li role="presentation"><a href="signOut">Sign Out</a>
+                    </li>
+                </ul>
+            </nav>
+            <h1>Food Database</h1>
+        </div>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+    <div class="jumbotron">
+    		{% macro render_field(field) %}
+				    <dt>{{ field.label }}
+				    <dd>{{ field(**kwargs)|safe }}
+				    {% if field.errors %}
+				        <ul class=errors>
+				        {% for error in field.errors %}
+				            <li>{{ error }}</li>
+				        {% endfor %}
+				        </ul>
+				    {% endif %}
+				    </dd>
+				{% endmacro %}
+	    <form method=post>
+			  <dl>
+			    {{ render_field(form.search) }}
+			  </dl>
+			  <p><input type=submit value=Search>
+			</form>
+    </div>
+        <div class="jumbotron">
+    Select at least one food from below:</br>
+    <form class="form-update">
+        {% for r in res %}
+            {{r.name}} || {{r.calories}} calories</br>{{r.brand}}<input type=checkbox name="foodSelection" value="{{r.mfp_id}}">
+            <p><p>
+        {% endfor %}
+        <button id="addFood" class="btn btn-sm btn-primary" type="button">Add</button>
+    </form>
+    </div>
+
+        <footer class="footer">
+            <p>&copy; O.K 2019</p>
+        </footer>
+
+    </div>
+</body>
+
+</html>
