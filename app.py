@@ -1,5 +1,5 @@
 import logging,sys,argparse, random, re
-#import myfitnesspal
+import myfitnesspal
 from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
@@ -32,9 +32,9 @@ app.config['MYSQL_DATABASE_HOST'] = 'ambari-head.csc.calpoly.edu'
 mysql.init_app(app)
 
 
-# client = myfitnesspal.Client("Danz1ty")
+client = ""
 today = date.today().strftime('%Y-%m-%d')
-
+app.logger.info("TODAY: ",today)
 
 PER_PAGE = 10
 
@@ -131,16 +131,22 @@ def login_required(function_to_protect):
 		a_wrapper_accepting_arguments.__name__ = function_to_protect.__name__
 		return a_wrapper_accepting_arguments
 
-def getMacros(food_id):
-	data = client.get_food_item_details(food_id)
-	return (data.calories,data.protein,data.fat,data.carbohydrates)
 
 """
 -----------------------------------
 App Main Functions
 -----------------------------------
 """
+def getQuotes():
+	_id = random.randint(1,104)
+	data = run_SP(_id, s_proc='sp_getQuote')
+	quote = data[0][0]
+	return quote
 
+def getMacros(food_id):
+	data = client.get_food_item_details(food_id)
+	return (round(data.calories,2), round(data.protein,2),
+		round(data.fat,2), round(data.carbohydrates,2))
 
 
 '''
@@ -240,19 +246,13 @@ def showNutrition():
 	Dependent on MFP account
 
 	"""
-
-	username = request.cookies.get("current_user")
-	data = run_SP(username, today, s_proc="sp_getTodayFood")
-	carb = fat = protein = cals =0
-	#app.logger.info("data: %s", data)
-	for food_id in [d[0] for d in data]:
-		app.logger.info("food _id in show %s" , food_id)
-		food = client.get_food_item_details(food_id)
-		fat += round(food.fat,2)
-		protein += round(food.protein,2)
-		carb += round(food.carbohydrates,2)
-		cals += round(food.calories,2)
-	run_SP(username,today,cals,protein,fat,carb,s_proc="sp_updateMacros")
+	user = request.cookies.get("current_user")
+	macros = run_SP(user, today, s_proc="sp_getMacros")
+	app.logger.info("in show nutrition: %s",macros)
+	cals = 0 if not macros else macros[0][0]
+	protein = 0 if not macros else macros[0][1]
+	fat = 0 if not macros else macros[0][2]
+	carb = 0 if not macros else macros[0][3]
 
 	return render_template('nutrition.html', cal=cals, protein=protein, fat=fat,carbs=carb)
 
@@ -292,10 +292,17 @@ def searchResults(search):
 def addFood():
 	foods = request.form.getlist("foodSelection")
 	user = request.cookies.get("current_user")
-	app.logger.info("foods len %d", len(foods))
+	macros = run_SP(user, today, s_proc="sp_getMacros")
+	app.logger.info("in add food %s",macros)
+	macros = [0,0,0,0] if not macros else macros[0]
 	for food_id in foods:
 		app.logger.info("food id: %s",food_id)
+		app.logger.info("today: %s",today)
+		macros_one = list(getMacros(food_id))
+		macros = [sum(x) for x in zip(macros,macros_one)]
+		app.logger.info("today %s, macros %s",today,macros)
 		run_SP(user,food_id,today,s_proc="sp_addFood")
+		run_SP(user,today,*macros,s_proc="sp_updateMacros")
 		#run_SP(user,today, *(getMacros(food_id)),s_proc="sp_updateMacros")
 	return render_template("nutrition.html")
 
@@ -318,9 +325,7 @@ def showWorkout():
 
 	user = request.cookies.get("current_user")
 	# 104 is the length of the motivation table
-	_id = random.randint(1,104)
-	data = run_SP(_id, s_proc='sp_getQuote')
-	quote = data[0][0]
+	quote = getQuotes()
 
 	my_date = date.today()
 	day = calendar.day_name[my_date.weekday()]
@@ -397,10 +402,7 @@ def showGoals():
 	"""
 
 	user = request.cookies.get("current_user")
-	# 104 is the length of the motivation table
-	_id = random.randint(1,104)
-	data = run_SP(_id, s_proc='sp_getQuote')
-	quote = data[0][0]
+	quote = getQuotes()
 	data = run_SP(user,s_proc='sp_getGoals')
 	app.logger.info(data)
 	try:
@@ -460,12 +462,11 @@ def homePage():
 		# if macros == ():
 		# 	macros = []
 		# 	macros[0] = [0,0,0]
-		macros = [[0,0,0]]
+		#macros = [[0,0,0]]
 
-		app.logger.info(macros[0])
-		_id = random.randint(1,104)
-		quote = run_SP(_id, s_proc='sp_getQuote')
-		app.logger.info(quote[0][0])
+		#app.logger.info(macros[0])
+
+		quote = getQuotes()
 		my_date = date.today()
 		day = calendar.day_name[my_date.weekday()]
 		muscle_group = run_SP(user, day, s_proc= 'sp_getWorkout')[0][1]
@@ -475,10 +476,10 @@ def homePage():
 
 
 		#user = request.cookies.get("current_user")
-		user = "k" # only one with data rn
-		app.logger.info(user)
+		#user = "k" # only one with data rn
+		app.logger.info(macros.protein)
 		# day = date.today()
-		day = "2019-04-18"
+		day = today
 		app.logger.info(day)
 		data = run_SP(user, day, s_proc='sp_getMacros')
 		app.logger.info(data)
@@ -504,7 +505,7 @@ def homePage():
 		#app.logger.info("user day calories: %d", day_calories)
 		#return render_template('home.html', day_calories=day_calories, user=user)
 		return render_template('home.html', user=user,calories=macros[0][0],
-						quote=quote[0][0],workout=muscle_group,done=workout_done, title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
+						quote=quote,workout=muscle_group,done=workout_done, title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
 
 @app.route("/signOut")
 def signOut():
@@ -671,6 +672,7 @@ def signUp():
 
 
 if __name__ == "__main__":
+
 		# parser = argparse.ArgumentParser(description='our fitness app.')
 		# parser.add_argument('MFP_username',
 		# 	help='your username for myfitnesspal')
@@ -678,5 +680,6 @@ if __name__ == "__main__":
 		# ## this next block would ideally be put into signup when we create users MFP accounts
 		# ## save the username and hashed password into the myfitnesspal API
 		#call(["myfitnesspal", "store-password", "Danz1ty"])
+		client = myfitnesspal.Client("Danz1ty")
 
 		app.run(debug=True)
