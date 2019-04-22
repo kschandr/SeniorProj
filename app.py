@@ -1,6 +1,6 @@
 import logging,sys,argparse, random, re
-import myfitnesspal
-from flask import Flask, render_template,json,request, redirect, url_for, flash
+#import myfitnesspal
+from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from subprocess import call
@@ -32,7 +32,7 @@ app.config['MYSQL_DATABASE_HOST'] = 'ambari-head.csc.calpoly.edu'
 mysql.init_app(app)
 
 
-client = myfitnesspal.Client("Danz1ty")
+# client = myfitnesspal.Client("Danz1ty")
 today = date.today().strftime('%Y-%m-%d')
 
 
@@ -549,6 +549,58 @@ def main():
 		""" SHows welcome page with signup button
 		"""
 		return render_template('index.html')
+
+
+# @app.route("/chart")
+# def chart():
+# 	labels = ["January","February","March","April","May","June","July","August"]
+# 	values = [10,9,8,7,6,4,7,8]
+# 	colors = [ "#F7464A", "#46BFBD", "#FDB45C", "#FEDCBA","#ABCDEF", "#DDDDDD", "#ABCABC"  ]
+# 	return render_template('chart.html', set=zip(values, labels, colors))
+
+
+option_colors = [
+    "#F7464A", "#46BFBD", "#FDB45C", "#FEDCBA",
+    "#ABCDEF", "#DDDDDD", "#ABCABC", "#4169E1",
+    "#C71585", "#FF4500", "#FEDCBA", "#46BFBD"]
+
+@app.route('/bar')
+def bar():
+	labels = []
+	values = []
+
+    bar_labels=labels
+    bar_values=values
+    return render_template('bar_chart.html', title="This Week's Calories", labels=bar_labels, values=bar_values)
+
+@app.route('/line')
+def line():
+	labels = []
+	values = []
+
+    line_labels=labels
+    line_values=values
+    return render_template('line_chart.html', title='Workouts This Week', max=17000, labels=line_labels, values=line_values)
+
+@app.route('/pie')
+def pie():
+    pie_labels = ["protein", "carbohydrate", "fat"]
+    pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
+
+    #user = request.cookies.get("current_user")
+    user = "k" # only one with data rn
+    app.logger.info(user)
+    # day = date.today()
+    day = "2019-04-18"
+    app.logger.info(day)
+    data = run_SP(user, day, s_proc='sp_getMacros')
+    app.logger.info(data)
+    protein = data[0][0]
+    carb = data[0][1]
+    fat = data[0][2]
+    pie_values = [protein, carb, fat]
+    return render_template('pie_chart.html', title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
+
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
