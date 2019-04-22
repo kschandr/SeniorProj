@@ -300,8 +300,9 @@ CREATE PROCEDURE `sp_getCompletion`(
 )
 BEGIN
   if ( select exists (select 1 from workout_complete where username=username and day=day)) 
-  THEN select 'done'
-  ELSE select 'not'
+  THEN select 'done';
+  ELSE select 'not';
+  end if;
 END$$
 DELIMITER ;
 
@@ -436,15 +437,13 @@ in fat bigint(20),
 in carb bigint(20)
 )
 begin 
-  if ( select exists (select 1 from macros where username=username and today=today)) 
-  
-  THEN 	update macros 
-		SET calories = cals, protein=protein, fat = fat, carb =carb 
-		WHERE username = username and today=today;
-        
-  ELSE 	insert into macros(username, today,calories,protein,fat,carb) 
-		values(username,today, cals,protein,fat,carb);
-end if;
+
+insert into macros
+	(username, today,calories,protein,fat,carb) 
+values
+    (username,today, cals,protein,fat,carb)
+on duplicate key update  
+	calories = cals, protein=protein, fat = fat, carb =carb;
 end $$
 delimiter ;
 
@@ -456,5 +455,16 @@ in today date
 )
 begin 
 	select calories,protein,fat,carb from macros where username=username and today = today;
+end $$
+delimiter ;
+
+
+drop procedure if exists sp_getTodayFood;
+delimiter $$
+CREATE PROCEDURE `sp_getTodayFood`(
+in username varchar(45),
+in today date)
+begin
+	select food_id from food where username=username and input_date=today;
 end $$
 delimiter ;
