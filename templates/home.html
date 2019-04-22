@@ -3,7 +3,7 @@
 
 <head>
     <title>Python Flask App</title>
-
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js'></script>
 
     <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
     <link href="../static/signup.css" rel="stylesheet">
@@ -54,7 +54,31 @@
             </div>
             <div class="jumbotron">
             <h2>Graphs</h2>
+
+                <h3>{{ title }}</h3>
+
+                <canvas id="chart" width="600" height="400"></canvas>
+                <script>
+                  var pieData = [
+                    {% for item, label, colors in set %}
+                      {
+                        value: {{item}},
+                        label: "{{label}}",
+                        color : "{{colors}}"
+                      },
+                    {% endfor %}
+                  ];
+                  // get bar chart canvas
+                  var mychart = document.getElementById("chart").getContext("2d");
+                  steps = 10
+                  max = {{ max }}
+                  // draw pie chart
+                  new Chart(document.getElementById("chart").getContext("2d")).Pie(pieData);
+                </script>
             </div>
+<!--             <div>
+            {{chart}}
+            </div> -->
             <div class="jumbotron">
             <h2>Motivation</h2>
             {{quote}}

@@ -456,6 +456,12 @@ def homePage():
 		user = request.cookies.get("current_user")
 		#app.logger.info("This is the home page. Current user: %s", user)
 		macros = run_SP(user, today, s_proc="sp_getMacros")
+		app.logger.info("MACROS:", macros)
+		# if macros == ():
+		# 	macros = []
+		# 	macros[0] = [0,0,0]
+		macros = [[0,0,0]]
+
 		app.logger.info(macros[0])
 		_id = random.randint(1,104)
 		quote = run_SP(_id, s_proc='sp_getQuote')
@@ -463,6 +469,24 @@ def homePage():
 		my_date = date.today()
 		day = calendar.day_name[my_date.weekday()]
 		muscle_group = run_SP(user, day, s_proc= 'sp_getWorkout')[0][1]
+
+		pie_labels = ["protein", "carbohydrate", "fat"]
+		pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
+
+
+		#user = request.cookies.get("current_user")
+		user = "k" # only one with data rn
+		app.logger.info(user)
+		# day = date.today()
+		day = "2019-04-18"
+		app.logger.info(day)
+		data = run_SP(user, day, s_proc='sp_getMacros')
+		app.logger.info(data)
+		protein = data[0][0]
+		carb = data[0][1]
+		fat = data[0][2]
+		pie_values = [protein, carb, fat]
+
 
 		try:
 			data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -480,7 +504,7 @@ def homePage():
 		#app.logger.info("user day calories: %d", day_calories)
 		#return render_template('home.html', day_calories=day_calories, user=user)
 		return render_template('home.html', user=user,calories=macros[0][0],
-						quote=quote[0][0],workout=muscle_group,done=workout_done)
+						quote=quote[0][0],workout=muscle_group,done=workout_done, title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
 
 @app.route("/signOut")
 def signOut():
@@ -560,46 +584,46 @@ def main():
 
 
 option_colors = [
-    "#F7464A", "#46BFBD", "#FDB45C", "#FEDCBA",
-    "#ABCDEF", "#DDDDDD", "#ABCABC", "#4169E1",
-    "#C71585", "#FF4500", "#FEDCBA", "#46BFBD"]
+	"#F7464A", "#46BFBD", "#FDB45C", "#FEDCBA",
+	"#ABCDEF", "#DDDDDD", "#ABCABC", "#4169E1",
+	"#C71585", "#FF4500", "#FEDCBA", "#46BFBD"]
 
 @app.route('/bar')
 def bar():
 	labels = []
 	values = []
 
-    bar_labels=labels
-    bar_values=values
-    return render_template('bar_chart.html', title="This Week's Calories", labels=bar_labels, values=bar_values)
+	bar_labels=labels
+	bar_values=values
+	return render_template('bar_chart.html', title="This Week's Calories", labels=bar_labels, values=bar_values)
 
 @app.route('/line')
 def line():
 	labels = []
 	values = []
 
-    line_labels=labels
-    line_values=values
-    return render_template('line_chart.html', title='Workouts This Week', max=17000, labels=line_labels, values=line_values)
+	line_labels=labels
+	line_values=values
+	return render_template('line_chart.html', title='Workouts This Week', max=17000, labels=line_labels, values=line_values)
 
 @app.route('/pie')
 def pie():
-    pie_labels = ["protein", "carbohydrate", "fat"]
-    pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
+	pie_labels = ["protein", "carbohydrate", "fat"]
+	pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
 
-    #user = request.cookies.get("current_user")
-    user = "k" # only one with data rn
-    app.logger.info(user)
-    # day = date.today()
-    day = "2019-04-18"
-    app.logger.info(day)
-    data = run_SP(user, day, s_proc='sp_getMacros')
-    app.logger.info(data)
-    protein = data[0][0]
-    carb = data[0][1]
-    fat = data[0][2]
-    pie_values = [protein, carb, fat]
-    return render_template('pie_chart.html', title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
+	#user = request.cookies.get("current_user")
+	user = "k" # only one with data rn
+	app.logger.info(user)
+	# day = date.today()
+	day = "2019-04-18"
+	app.logger.info(day)
+	data = run_SP(user, day, s_proc='sp_getMacros')
+	app.logger.info(data)
+	protein = data[0][0]
+	carb = data[0][1]
+	fat = data[0][2]
+	pie_values = [protein, carb, fat]
+	return render_template('pie_chart.html', title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
 
 
 @app.route('/signUp',methods=['POST'])
