@@ -1,0 +1,15 @@
+requests==2.21.0
+blessed==1.15.0
+Flask==0.12.2
+Werkzeug==0.12.2
+WTForms==2.2.1
+keyring==8.7
+python_dateutil==2.8.0
+Flask_Bcrypt==0.7.1
+lxml==4.3.3
+measurement==2.0.1
+mock==2.0.0
+pexpect==4.7.0
+setuptools==41.0.1
+six==1.12.0
+myfitnesspal==1.13.3
