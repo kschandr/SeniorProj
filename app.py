@@ -1,13 +1,10 @@
 import logging,sys,argparse, random, re
-import myfitnesspal
+import myfitnesspal, datetime,calendar,pexpect
 from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
-from subprocess import call
 from helper import *
-import datetime
 from datetime import date, datetime, timedelta
-import calendar
 from math import ceil
 from wtforms import Form, StringField, SelectField
 
@@ -16,6 +13,7 @@ from wtforms import Form, StringField, SelectField
 Requirements:
 pip install myfitnesspal
 pip install Flask-WTF
+pip install pexpect
 """
 
 app = Flask(__name__)
@@ -458,6 +456,10 @@ def homePage():
 		user = request.cookies.get("current_user")
 		#app.logger.info("This is the home page. Current user: %s", user)
 		macros = run_SP(user, today, s_proc="sp_getMacros")
+		protein = macros[0][1]
+		carb = macros[0][2]
+		fat = macros[0][3]
+		pie_values = [protein, carb, fat]
 		#app.logger.info("MACROS:", macros)
 		# if macros == ():
 		# 	macros = []
@@ -475,20 +477,6 @@ def homePage():
 		pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
 
 
-		#user = request.cookies.get("current_user")
-		#user = "k" # only one with data rn
-		app.logger.info(macros.protein)
-		# day = date.today()
-		day = today
-		app.logger.info(day)
-		data = run_SP(user, day, s_proc='sp_getMacros')
-		app.logger.info(data)
-		protein = data[0][1]
-		carb = data[0][2]
-		fat = data[0][3]
-		pie_values = [protein, carb, fat]
-
-
 		cals = []
 		dates = []
 		for N in [6, 5, 4, 3, 2, 1, 0]:
@@ -503,9 +491,6 @@ def homePage():
 			else:
 				cals.append(0)
 		app.logger.info(cals)
-
-
-
 
 		try:
 			data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -523,7 +508,7 @@ def homePage():
 		#app.logger.info("user day calories: %d", day_calories)
 		#return render_template('home.html', day_calories=day_calories, user=user)
 		return render_template('home.html', user=user,calories=macros[0][0],
-						quote=quote,,workout=muscle_group,done=workout_done,
+						quote=quote,workout=muscle_group,done=workout_done,
 						g1_title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors),
 							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(cals)+500))
 
@@ -700,6 +685,11 @@ if __name__ == "__main__":
 		# ## this next block would ideally be put into signup when we create users MFP accounts
 		# ## save the username and hashed password into the myfitnesspal API
 		#call(["myfitnesspal", "store-password", "Danz1ty"])
-		client = myfitnesspal.Client("Danz1ty")
+		try:
+			client = myfitnesspal.Client("Danz1ty")
+		except myfitnesspal.keyring_utils.NoStoredPasswordAvailable:
+			child = pexpect.spawn("myfitnesspal store-password Danz1ty")
+			child.expect("MyFitnessPal Password for Danz1ty:")
+			child.sendline("senior")
 
 		app.run(debug=True)
