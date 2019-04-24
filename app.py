@@ -1,5 +1,6 @@
 import logging,sys,argparse, random, re
-import myfitnesspal, datetime,calendar,pexpect
+import myfitnesspal
+import datetime,calendar,pexpect
 from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
@@ -21,7 +22,7 @@ app = Flask(__name__)
 # generated in terminal via: python -c 'import os; print(os.urandom(16))'
 app.secret_key = b'\xcdW\x16\x13\xcfU\xf0p\xd5\xdf\xef\xa7\x9b\xac\xb0H'
 mysql = MySQL()
-
+app.logger.setLevel(logging.INFO)
 # MySQL configurations
 app.config['MYSQL_DATABASE_USER'] = 'kaysha'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'seniorproject'
@@ -32,7 +33,6 @@ mysql.init_app(app)
 
 client = ""
 today = date.today().strftime('%Y-%m-%d')
-app.logger.info("TODAY: ",today)
 
 PER_PAGE = 10
 
@@ -173,9 +173,10 @@ def updateProfile():
 		#app.logger.info("input height %s", _height)
 		#app.logger.info("input name len %d", len(_name))
 
+
 		if _weight:
 				#sql stuff
-				run_SP(_weight, _user, s_proc='sp_editWeight')
+				run_SP(_weight, _user, today, s_proc='sp_editWeight')
 
 		if _height:
 			#sql stuff
@@ -454,19 +455,15 @@ def homePage():
 
 		## This is how you get the username
 		user = request.cookies.get("current_user")
-		#app.logger.info("This is the home page. Current user: %s", user)
-		macros = run_SP(user, today, s_proc="sp_getMacros")
-		protein = macros[0][1]
-		carb = macros[0][2]
-		fat = macros[0][3]
-		pie_values = [protein, carb, fat]
-		#app.logger.info("MACROS:", macros)
-		# if macros == ():
-		# 	macros = []
-		# 	macros[0] = [0,0,0]
-		#macros = [[0,0,0]]
+		app.logger.info("This is the home page. Current user: %s", user)
 
-		#app.logger.info(macros[0])
+		#MACROS CHART
+		macros = run_SP(user, today, s_proc="sp_getMacros")
+		macros = [0,0,0,0] if not macros else macros[0]
+		protein = macros[1]
+		carb = macros[2]
+		fat = macros[3]
+		pie_values = [protein, carb, fat]
 
 		quote = getQuotes()
 		my_date = date.today()
@@ -477,6 +474,7 @@ def homePage():
 		pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
 
 
+		#WEEKLY CALORIES CHART
 		cals = []
 		dates = []
 		for N in [6, 5, 4, 3, 2, 1, 0]:
@@ -491,6 +489,20 @@ def homePage():
 			else:
 				cals.append(0)
 		app.logger.info(cals)
+
+		#WEIGHT PROGRESS CHART
+		all_weight_updates = run_SP(user, s_proc='sp_getWeightProgress')
+		app.logger.info("user", user)
+		app.logger.info("WEIGHT", all_weight_updates)
+		line_values = []
+		line_labels = []
+		for item in all_weight_updates:
+			
+			line_values.append(item[1])
+			line_labels.append(item[2].strftime("%m-%d-%Y"))
+		app.logger.info(line_labels)
+		app.logger.info(line_values)
+
 
 		try:
 			data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -507,10 +519,11 @@ def homePage():
 		#day_calories = client.get_date(2019,2,2).totals
 		#app.logger.info("user day calories: %d", day_calories)
 		#return render_template('home.html', day_calories=day_calories, user=user)
-		return render_template('home.html', user=user,calories=macros[0][0],
+		return render_template('home.html', user=user,calories=macros[0],
 						quote=quote,workout=muscle_group,done=workout_done,
 						g1_title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors),
-							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(cals)+500))
+							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(cals)+500),
+							g3_title="Weight Progress", line_labels=line_labels, line_values=line_values, line_max=500)
 
 @app.route("/signOut")
 def signOut():
@@ -594,43 +607,6 @@ option_colors = [
 	"#ABCDEF", "#DDDDDD", "#ABCABC", "#4169E1",
 	"#C71585", "#FF4500", "#FEDCBA", "#46BFBD"]
 
-@app.route('/bar')
-def bar():
-	labels = []
-	values = []
-
-	bar_labels=labels
-	bar_values=values
-	return render_template('bar_chart.html', title="This Week's Calories", labels=bar_labels, values=bar_values)
-
-@app.route('/line')
-def line():
-	labels = []
-	values = []
-
-	line_labels=labels
-	line_values=values
-	return render_template('line_chart.html', title='Workouts This Week', max=17000, labels=line_labels, values=line_values)
-
-@app.route('/pie')
-def pie():
-	pie_labels = ["protein", "carbohydrate", "fat"]
-	pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
-
-	#user = request.cookies.get("current_user")
-	user = "k" # only one with data rn
-	app.logger.info(user)
-	# day = date.today()
-	day = "2019-04-18"
-	app.logger.info(day)
-	data = run_SP(user, day, s_proc='sp_getMacros')
-	app.logger.info(data)
-	protein = data[0][0]
-	carb = data[0][1]
-	fat = data[0][2]
-	pie_values = [protein, carb, fat]
-	return render_template('pie_chart.html', title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors))
-
 
 @app.route('/signUp',methods=['POST'])
 def signUp():
@@ -656,7 +632,8 @@ def signUp():
 						flash("Invalid email address")
 						return json.dumps({'html':'<span>Enter the required fields</span>'})
 
-				_hashed_password = generate_password_hash(_password)
+				# _hashed_password = generate_password_hash(_password)
+				_hashed_password = _password
 
 				#save the user and password into the usr_tbl via sp_createUser stored proc.
 				data =run_SP(_name,_email,_hashed_password, s_proc='sp_createUser')
@@ -685,6 +662,8 @@ if __name__ == "__main__":
 		# ## this next block would ideally be put into signup when we create users MFP accounts
 		# ## save the username and hashed password into the myfitnesspal API
 		#call(["myfitnesspal", "store-password", "Danz1ty"])
+		
+
 		try:
 			client = myfitnesspal.Client("Danz1ty")
 		except myfitnesspal.keyring_utils.NoStoredPasswordAvailable:

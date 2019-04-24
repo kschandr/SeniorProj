@@ -59,6 +59,7 @@
 
                 <h3>{{ g1_title }}</h3>
 
+                {% if not calories==0 %}
                 <canvas id="chart1" width="600" height="400"></canvas>
                 <script>
                   var pieData = [
@@ -78,11 +79,17 @@
                   new Chart(document.getElementById("chart1").getContext("2d")).Pie(pieData);
                 </script>
 
+                {% else %}
+                No macro data for today
+
+                {% endif %}
+
+
 <!--             <div>
             {{chart}}
             </div> -->
     <br><br><br>
-    <h1>{{ g2_title }}</h1>
+    <h3>{{ g2_title }}</h3>
     <canvas id="chart2" width="600" height="400"></canvas>
     <script>
       // bar chart data
@@ -121,6 +128,61 @@
        }
      );
     </script>
+
+    <h3>{{ g3_title }}</h3>
+
+    <canvas id="chart" width="600" height="400"></canvas>
+    <script>
+      // bar chart data
+      var barData = {
+        line_labels : [
+          {% for item in line_labels %}
+            "{{ item }}",
+          {% endfor %}
+        ],
+        datasets : [{
+          fillColor: "rgba(151,187,205,0.2)",
+          strokeColor: "rgba(151,187,205,1)",
+          pointColor: "rgba(151,187,205,1)",
+          pointStrokeColor: "#fff",
+          pointHighlightFill: "#fff",
+          pointHighlightStroke: "rgba(151,187,205,1)",
+          bezierCurve : false,
+          data : [
+      {% for item in line_values %}
+              {{ item }},
+            {% endfor %}]
+          }
+  ]
+      }
+      Chart.defaults.global.animationSteps = 50;
+      Chart.defaults.global.tooltipYPadding = 16;
+      Chart.defaults.global.tooltipCornerRadius = 0;
+      Chart.defaults.global.tooltipTitleFontStyle = "normal";
+      Chart.defaults.global.tooltipFillColor = "rgba(0,0,0,0.8)";
+      Chart.defaults.global.animationEasing = "easeOutBounce";
+      Chart.defaults.global.responsive = false;
+      Chart.defaults.global.scaleLineColor = "black";
+      Chart.defaults.global.scaleFontSize = 16;
+      // get bar chart canvas
+      var mychart = document.getElementById("chart").getContext("2d");
+      steps = 10
+      line_max = {{ line_max }}
+      // draw bar chart
+      var LineChartDemo = new Chart(mychart).Line(barData, {
+        scaleOverride: true,
+        scaleSteps: steps,
+        scaleStepWidth: Math.ceil(line_max / steps),
+        scaleStartValue: 0,
+        scaleShowVerticalLines: true,
+        scaleShowGridLines : true,
+        barShowStroke : true,
+        scaleShowLabels: true,
+        bezierCurve: false,
+      });
+    </script>
+  </center>
+
   </div>
             <div class="jumbotron">
             <h2>Motivation</h2>
