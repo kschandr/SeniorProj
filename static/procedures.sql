@@ -100,7 +100,13 @@ CREATE TABLE `macros` (
   PRIMARY KEY (username,today)
 ); 
 
-
+drop table if exists weight_progress;
+CREATE TABLE `weight_progress` (
+  `user` varchar(45) NOT NULL,
+  `pounds` int(11) DEFAULT NULL,
+  `day` date NOT NULL,
+  PRIMARY KEY (`user`,`day`)
+);
 
 /*
 Stored procedures 
@@ -190,11 +196,11 @@ username: str, username whose height will be updated
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_editHeight`(
-    IN height INT,
-    IN username VARCHAR(45)
+    IN _height INT,
+    IN _username VARCHAR(45)
 )
 BEGIN
-  UPDATE tbl_profile SET height = height WHERE username = username;
+  UPDATE tbl_profile SET height = _height WHERE username = _username;
 
 END$$
 DELIMITER ;
@@ -204,19 +210,29 @@ DROP PROCEDURE IF EXISTS sp_editWeight;
 
 /***sp_editWeight
 edit the weight value for a user
+update the weight progress table with the inputted weight in pounds
 
 Parameters:
 ---
 weight: int, the weight in pounds
 username: str, username whose weight will be updated
+today: todays' date
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_editWeight`(
-    IN weight INT,
-    IN username VARCHAR(45)
+    IN _weight INT,
+    IN _username VARCHAR(45),
+    in _today date
+    
 )
 BEGIN
-  UPDATE tbl_profile SET weight = weight WHERE username = username;
+  UPDATE tbl_profile SET weight = _weight WHERE username = _username;
+  insert into weight_progress
+	(user, pounds, day) 
+  values
+    (_username,_weight,_today)
+  on duplicate key update  
+	pounds = _weight;
 END$$
 DELIMITER ;
 
@@ -235,13 +251,13 @@ username: str, username
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_editAgeSexActivity`(
-    IN age INT,
-    IN sex VARCHAR(45),
-    IN activity varchar(95),
-    IN username VARCHAR(45)
+    IN _age INT,
+    IN _sex VARCHAR(45),
+    IN _activity varchar(95),
+    IN _username VARCHAR(45)
 )
 BEGIN
-  UPDATE tbl_profile SET age = age, sex=sex, activity=activity WHERE username = username;
+  UPDATE tbl_profile SET age = _age, sex= _sex, activity= _activity WHERE username = _username;
 END$$
 DELIMITER ;
 
@@ -256,10 +272,10 @@ username: str, username
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_getProfile`(
-    IN username VARCHAR(45)
+    IN _username VARCHAR(45)
 )
 BEGIN
-  select weight, height, age, sex, activity from tbl_profile where username = username;
+  select weight, height, age, sex, activity from tbl_profile where username = _username;
 END$$
 DELIMITER ;
 
@@ -275,11 +291,16 @@ day: str
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_getWorkout`(
-    IN username VARCHAR(45),
-    IN day VARCHAR(20)
+    IN _username VARCHAR(45),
+    IN _day VARCHAR(20)
 )
 BEGIN
-  select workout, muscle_group from exercises where id IN (select id from plans where day = day and goal IN (select weight_goal from tbl_goals where username=username));
+  select workout, muscle_group from exercises 
+  where id 
+  IN (select id from plans 
+	  where day = _day and goal IN (
+			select weight_goal from tbl_goals 
+				where username=_username));
 END$$
 DELIMITER ;
 
@@ -295,11 +316,11 @@ day: str
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_getCompletion`(
-    IN username VARCHAR(45),
-    IN day VARCHAR(60)
+    IN _username VARCHAR(45),
+    IN _day VARCHAR(60)
 )
 BEGIN
-  if ( select exists (select 1 from workout_complete where username=username and day=day)) 
+  if ( select exists (select 1 from workout_complete where username=_username and day=_day)) 
   THEN select 'done';
   ELSE select 'not';
   end if;
@@ -318,11 +339,11 @@ day: str
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_workoutDone`(
-    IN username VARCHAR(45),
-    IN day VARCHAR(60)
+    IN _username VARCHAR(45),
+    IN _day VARCHAR(60)
 )
 BEGIN
-  insert into workout_complete (username, day) values (username, day);
+  insert into workout_complete (username, day) values (_username, _day);
 END$$
 DELIMITER ;
 
@@ -383,10 +404,10 @@ id: int, the random integer that takes a motivational quote
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_getQuote`(
-    IN id INT
+    IN _id INT
 )
 BEGIN
-  select quote from motivation where id = id;
+  select quote from motivation where id = _id;
 END$$
 DELIMITER ;
 
@@ -416,12 +437,12 @@ DELIMITER ;
 drop procedure if exists sp_addFood;
 delimiter $$
 CREATE  PROCEDURE `sp_addFood`(
-in username varchar(45),
+in _username varchar(45),
 in mfp_id bigint(20),
 in today date /*yyyy-mm-dd*/
 )
 begin
-	insert into food(username,food_id, input_date) values (username, mfp_id, today);
+	insert into food(username,food_id, input_date) values (_username, mfp_id, today);
 end $$
 delimiter ;
 
@@ -429,32 +450,32 @@ delimiter ;
 DROP procedure if exists sp_updateMacros;
 delimiter $$
 CREATE PROCEDURE `sp_updateMacros`(
-in username varchar(45),
-in today date,
-in cals bigint(20),
-in protein bigint(20),
-in fat bigint(20),
-in carb bigint(20)
+in _username varchar(45),
+in _today date,
+in _cals bigint(20),
+in _protein bigint(20),
+in _fat bigint(20),
+in _carb bigint(20)
 )
 begin 
 
 insert into macros
 	(username, today,calories,protein,fat,carb) 
 values
-    (username,today, cals,protein,fat,carb)
+    (_username,_today, _cals, _protein,_fat,_carb)
 on duplicate key update  
-	calories = cals, protein=protein, fat = fat, carb =carb;
+	calories = _cals, protein=_protein, fat = _fat, carb =_carb;
 end $$
 delimiter ;
 
 drop procedure if exists sp_getMacros;
 delimiter $$
 create procedure `sp_getMacros`(
-in username varchar(45),
-in today date
+in _user varchar(45),
+in _today date
 )
 begin 
-	select calories,protein,fat,carb from macros where username=username and today = today;
+	select calories,protein,fat,carb from macros where username=_user and today = _today;
 end $$
 delimiter ;
 
@@ -462,9 +483,20 @@ delimiter ;
 drop procedure if exists sp_getTodayFood;
 delimiter $$
 CREATE PROCEDURE `sp_getTodayFood`(
-in username varchar(45),
-in today date)
+in _username varchar(45),
+in _today date)
 begin
-	select food_id from food where username=username and input_date=today;
+	select food_id from food where username=_username and input_date=_today;
 end $$
 delimiter ;
+
+drop procedure if exists sp_getWeightProgress;
+delimiter $$
+CREATE PROCEDURE `sp_getWeightProgress`(
+    IN username VARCHAR(45)
+)
+BEGIN
+  select * from weight_progress where user=username;
+END $$
+delimiter ;
+

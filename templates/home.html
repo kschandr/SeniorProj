@@ -134,7 +134,7 @@
     <canvas id="chart" width="600" height="400"></canvas>
     <script>
       // bar chart data
-      var barData = {
+      var lineData = {
         line_labels : [
           {% for item in line_labels %}
             "{{ item }}",
@@ -169,7 +169,7 @@
       steps = 10
       line_max = {{ line_max }}
       // draw bar chart
-      var LineChartDemo = new Chart(mychart).Line(barData, {
+      var LineChartDemo = new Chart(mychart).Line(lineData, {
         scaleOverride: true,
         scaleSteps: steps,
         scaleStepWidth: Math.ceil(line_max / steps),
@@ -181,7 +181,7 @@
         bezierCurve: false,
       });
     </script>
-  </center>
+
 
   </div>
             <div class="jumbotron">

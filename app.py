@@ -492,12 +492,12 @@ def homePage():
 
 		#WEIGHT PROGRESS CHART
 		all_weight_updates = run_SP(user, s_proc='sp_getWeightProgress')
-		app.logger.info("user", user)
-		app.logger.info("WEIGHT", all_weight_updates)
+		app.logger.info("user %s", user)
+		app.logger.info("WEIGHT %s", all_weight_updates)
 		line_values = []
 		line_labels = []
 		for item in all_weight_updates:
-			
+
 			line_values.append(item[1])
 			line_labels.append(item[2].strftime("%m-%d-%Y"))
 		app.logger.info(line_labels)
@@ -551,7 +551,7 @@ def signIn():
 
 		"""
 		#clean cookies
-		response = redirect('home')
+		response = redirect('showSignIn')
 		#response.set_cookie("current_user", '', max_age=0)
 		response.delete_cookie("current_user")
 		# read the posted values from the UI
@@ -641,7 +641,7 @@ def signUp():
 				if len(data) is 0:
 						## set the user cookies
 						## we should probably comply to GDPR :P
-						response = redirect('home')
+						response = redirect('showSignUp')
 						response.set_cookie("current_user", _name)
 						app.logger.info("setting name cookie %s", request.cookies.get("current_user"))
 						return response
@@ -662,7 +662,7 @@ if __name__ == "__main__":
 		# ## this next block would ideally be put into signup when we create users MFP accounts
 		# ## save the username and hashed password into the myfitnesspal API
 		#call(["myfitnesspal", "store-password", "Danz1ty"])
-		
+
 
 		try:
 			client = myfitnesspal.Client("Danz1ty")
