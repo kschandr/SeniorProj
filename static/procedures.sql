@@ -82,12 +82,12 @@ CREATE TABLE `news` (
 );
 
 drop table if exists food;
-create table food(
-	id bigint(10) auto_increment,
-	username varchar(45) not null,
-    food_id int(20) not null,
-    input_date DATE not null,
-    primary key (id)
+CREATE TABLE `food` (
+  `username` varchar(45) NOT NULL,
+  `food_id` varchar(45) NOT NULL,
+  `input_date` date NOT NULL,
+  `serving_size` int(11) DEFAULT '1',
+  PRIMARY KEY (`username`,`food_id`,`input_date`)
 );
 
 drop table if exists macros;
@@ -99,7 +99,7 @@ CREATE TABLE `macros` (
   `fat` bigint(20) NOT NULL,
   `carb` bigint(20) NOT NULL,
   PRIMARY KEY (username,today)
-); 
+);
 
 drop table if exists weight_progress;
 CREATE TABLE `weight_progress` (
@@ -110,7 +110,7 @@ CREATE TABLE `weight_progress` (
 );
 
 /*
-Stored procedures 
+Stored procedures
 */
 
 DROP PROCEDURE IF EXISTS sp_createUser;
@@ -220,7 +220,7 @@ Parameters:
 age: int
 sex: str, female or male
 activity: str, intensity of regular day activities
-username: str, username 
+username: str, username
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_editAgeSexActivity`(
@@ -236,12 +236,12 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_getProfile;
 
-/***sp_getProfile. 
+/***sp_getProfile.
 Returns the profile of user
 
 Parameters:
 ---
-username: str, username 
+username: str, username
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_getProfile`(
@@ -252,64 +252,67 @@ BEGIN
 END$$
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_getWorkout;
 
-/***sp_getWorkout. 
+
+/***sp_getWorkout.
 get a workout plan for the day
 
 Parameters:
 ---
-username: str, username 
+username: str, username
 day: str
 */
+DROP PROCEDURE IF EXISTS sp_getWorkout;
 DELIMITER $$
 CREATE PROCEDURE `sp_getWorkout`(
     IN _username VARCHAR(45),
     IN _day VARCHAR(20)
 )
 BEGIN
-  select workout, muscle_group from exercises 
-  where id 
-  IN (select id from plans 
+  select workout, muscle_group from exercises
+  where id
+  IN (select id from plans
 	  where day = _day and goal IN (
-			select weight_goal from tbl_goals 
+			select weight_goal from tbl_goals
 				where username=_username));
 END$$
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_getCompletion;
 
-/***sp_getCompletion. 
+/***sp_getCompletion.
 returns a complete boolean if the user has a workout plan
 
 Parameters:
 ---
-username: str, username 
+username: str, username
 day: str
 */
+DROP PROCEDURE IF EXISTS sp_getCompletion;
+
 DELIMITER $$
 CREATE PROCEDURE `sp_getCompletion`(
     IN _username VARCHAR(45),
     IN _day VARCHAR(60)
 )
 BEGIN
-  if ( select exists (select 1 from workout_complete where username=_username and day=_day)) 
+  if ( select exists (select 1 from workout_complete where username=_username and day=_day))
   THEN select 'done';
   ELSE select 'not';
   end if;
 END$$
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_workoutDone;
 
-/***sp_workoutDone. 
+
+/***sp_workoutDone.
 updates the workout plan for the user to show that workout is completed
 
 Parameters:
 ---
-username: str, username 
+username: str, username
 day: str
 */
+DROP PROCEDURE IF EXISTS sp_workoutDone;
 DELIMITER $$
 CREATE PROCEDURE `sp_workoutDone`(
     IN _username VARCHAR(45),
@@ -322,12 +325,12 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS sp_editGoals;
 
-/***sp_editGoals. 
+/***sp_editGoals.
 updates goals for the user
 
 Parameters:
 ---
-p_username: str, username 
+p_username: str, username
 bool_list: str, has the list of goals the user wants to acheive (training goal)
 weight: str, weight goal (maintain, lose or gain)
 */
@@ -344,19 +347,19 @@ declare weights boolean default 0;
 set run = if(find_in_set('2',bool_list) <> 0, 1,0);
 set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
 
-INSERT INTO tbl_goals (username,lift,run_5k,weight_goal,goal_lbs) VALUES(p_username,weights,run,weight_diff,weight_goal) ON DUPLICATE KEY UPDATE    
+INSERT INTO tbl_goals (username,lift,run_5k,weight_goal,goal_lbs) VALUES(p_username,weights,run,weight_diff,weight_goal) ON DUPLICATE KEY UPDATE
 lift = weights, run_5k=run, weight_goal = weight_diff, goal_lbs = weight_goal;
 END $$
 delimiter ;
 
 DROP PROCEDURE IF EXISTS sp_getGoals;
 
-/***sp_getGoals. 
+/***sp_getGoals.
 get goals for the user
 
 Parameters:
 ---
-p_username: str, username 
+p_username: str, username
 */
 delimiter $$
 CREATE PROCEDURE `sp_getGoals`(
@@ -370,12 +373,12 @@ delimiter ;
 
 DROP PROCEDURE IF EXISTS sp_getQuote;
 
-/***sp_getQuote. 
+/***sp_getQuote.
 get motivational quote
 
 Parameters:
 ---
-id: int, the random integer that takes a motivational quote 
+id: int, the random integer that takes a motivational quote
 */
 DELIMITER $$
 CREATE PROCEDURE `sp_getQuote`(
@@ -414,10 +417,16 @@ delimiter $$
 CREATE  PROCEDURE `sp_addFood`(
 in _username varchar(45),
 in mfp_id bigint(20),
-in today date /*yyyy-mm-dd*/
+in today date /*yyyy-mm-dd*/,
+in serving int
 )
 begin
-	insert into food(username,food_id, input_date) values (_username, mfp_id, today);
+	insert into food
+		(username,food_id, input_date, serving_size)
+    values
+		(_username, mfp_id, today,serving)
+	on duplicate key update
+		serving_size = serving_size + serving;
 end $$
 delimiter ;
 
@@ -432,13 +441,13 @@ in _protein bigint(20),
 in _fat bigint(20),
 in _carb bigint(20)
 )
-begin 
+begin
 
 insert into macros
-	(username, today,calories,protein,fat,carb) 
+	(username, today,calories,protein,fat,carb)
 values
     (_username,_today, _cals, _protein,_fat,_carb)
-on duplicate key update  
+on duplicate key update
 	calories = _cals, protein=_protein, fat = _fat, carb =_carb;
 end $$
 delimiter ;
@@ -449,7 +458,7 @@ create procedure `sp_getMacros`(
 in _user varchar(45),
 in _today date
 )
-begin 
+begin
 	select calories,protein,fat,carb from macros where username=_user and today = _today;
 end $$
 delimiter ;
@@ -461,7 +470,7 @@ CREATE PROCEDURE `sp_getTodayFood`(
 in _username varchar(45),
 in _today date)
 begin
-	select food_id from food where username=_username and input_date=_today;
+	select food_id, serving_size from food where username=_username and input_date=_today;
 end $$
 delimiter ;
 
@@ -506,10 +515,10 @@ CREATE PROCEDURE `sp_editWeight`(
 BEGIN
   UPDATE tbl_profile SET weight = _weight WHERE username = _username;
   insert into weight_progress
-  (user, pounds, day) 
+  (user, pounds, day)
   values
     (_username,_weight,_today)
-  on duplicate key update  
+  on duplicate key update
   pounds = _weight;
 END $$
 delimiter ;

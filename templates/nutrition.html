@@ -39,29 +39,48 @@
             <h2>Add Food</h2><a href="searchFood">Search</a>
         </div>
 
-
+        <h2>What You Ate Today</h2>
         <div class="jumbotron">
-            <h2>What You Ate Today</h2>
-            <table>
-               <tr>
-                    <th><pre>Calories</pre></th>
-                    <td><pre>{{cal}} cal</pre></td>
-               </tr>
-               <tr>
-                    <th><pre>Carbohydrates</pre></th>
-                    <td><pre>{{carbs}} g</pre></td>
-               </tr>
-               <tr>
-                    <th><pre>Protein</pre></th>
-                    <td><pre>{{protein}} g</pre></td>
-               </tr>
+            <div class="row">
+                <!-- so columns # have to add up to 12. md/lg specifies the screensize -->
+                <!-- source: https://www.w3schools.com/bootstrap/bootstrap_grid_system.asp -->
+                <div class="col-md-6 col-lg-6">
+                    <table>
+                       <tr>
+                            <th><pre>Calories</pre></th>
+                            <td><pre>{{cal}} cal</pre></td>
+                       </tr>
+                       <tr>
+                            <th><pre>Carbohydrates</pre></th>
+                            <td><pre>{{carbs}} g</pre></td>
+                       </tr>
+                       <tr>
+                            <th><pre>Protein</pre></th>
+                            <td><pre>{{protein}} g</pre></td>
+                       </tr>
 
-               <tr>
-                    <th><pre>Fat</pre></th>
-                    <td><pre>{{fat}} g </pre></td>
-               </tr>
+                       <tr>
+                            <th><pre>Fat</pre></th>
+                            <td><pre>{{fat}} g </pre></td>
+                       </tr>
 
-            </table>
+                    </table>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <table id="results">
+                        <tr>
+                            <th> Food Name</th>
+                            <th> Serving Size</th>
+                        </tr>
+                        {% for f,s in food_ids %}
+                            <tr> <td>{{f.name}}</td>
+                                <td>{{s}} x {{f.serving}}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+
         </div>
 
 
