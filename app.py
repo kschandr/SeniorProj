@@ -1,6 +1,6 @@
 import logging,sys,argparse, random, re
-import myfitnesspal
-import datetime,calendar,pexpect
+# import myfitnesspal,pexpect
+import datetime,calendar
 from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
@@ -414,12 +414,21 @@ def showGoals():
 	try:
 		lift_bool = True if data[0][0]==1 else False
 		run_bool = True if data[0][1]==1 else False
-		weight_goal = data[0][2]
+		weight_diff = data[0][2]
+		weight_goal = data[0][3]
 	except IndexError:
 		lift_bool = True
 		run_bool = True
+		weight_diff = 0
 		weight_goal = 0
-	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_goal)
+
+	try:
+		cur_weight = run_SP(user,s_proc='sp_getWeight')[0][0]
+	except IndexError:
+		cur_weight = 0
+
+	
+	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_diff, goal_lbs=weight_goal, cur_weight=cur_weight)
 
 @app.route("/update_goals",methods=['POST'])
 @login_required
@@ -428,14 +437,15 @@ def updateGoals():
 
 	"""
 
-	_weight_goal = request.form['weight']
+	_weight_diff = request.form['weight']
 	_pr = request.form.getlist("pr")
 	app.logger.info(request.form.getlist("pr"))
 	_user = request.cookies.get("current_user")
 	_pr = ','.join(_pr)
 	app.logger.info("_pr: %s", _pr)
 	# 1 = weightlifting, 2 = 5k
-	run_SP(_user,_pr,_weight_goal, s_proc="sp_editGoals")
+	_weight_goal = request.form['goal_weight']
+	run_SP(_user,_pr,_weight_diff, _weight_goal, s_proc="sp_editGoals")
 	return render_template('goals.html')
 
 @app.route("/edit_goals")
@@ -475,7 +485,10 @@ def homePage():
 		quote = getQuotes()
 		my_date = date.today()
 		day = calendar.day_name[my_date.weekday()]
+
+
 		muscle_group = run_SP(user, day, s_proc= 'sp_getWorkout')[0][1]
+		#muscle_group = "arms" #for debugging purposes
 
 		pie_labels = ["protein", "carbohydrate", "fat"]
 		pie_colors = ["#F7464A", "#46BFBD", "#FDB45C"]
@@ -510,6 +523,10 @@ def homePage():
 		app.logger.info(line_labels)
 		app.logger.info(line_values)
 
+		try:
+			goal_weight = run_SP(user,s_proc='sp_getGoals')[0][3]
+		except IndexError:
+			goal_weight = 0
 
 		try:
 			data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -530,7 +547,8 @@ def homePage():
 						quote=quote,workout=muscle_group,done=workout_done,
 						g1_title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors),
 							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(cals)+500),
-							g3_title="Weight Progress", line_labels=line_labels, line_values=line_values, line_max=500)
+							g3_title="Weight Progress", line_labels=line_labels, line_values=line_values, line_max=(max(line_values)+100),
+							goal_weight=goal_weight)
 
 @app.route("/signOut")
 def signOut():
@@ -567,7 +585,7 @@ def signIn():
 
 		# validate the received values
 		if _name and _password:
-				#_hashed_password = generate_password_hash(_password)
+				_hashed_password = generate_password_hash(_password)
 				data = run_SP(_name, s_proc='sp_loginUser')
 				if len(data) == 0 :
 					app.logger.error("User trying to log in not found")
@@ -671,11 +689,11 @@ if __name__ == "__main__":
 		#call(["myfitnesspal", "store-password", "Danz1ty"])
 
 
-		try:
-			client = myfitnesspal.Client("Danz1ty")
-		except myfitnesspal.keyring_utils.NoStoredPasswordAvailable:
-			child = pexpect.spawn("myfitnesspal store-password Danz1ty")
-			child.expect("MyFitnessPal Password for Danz1ty:")
-			child.sendline("senior")
+		# try:
+		# 	client = myfitnesspal.Client("Danz1ty")
+		# except myfitnesspal.keyring_utils.NoStoredPasswordAvailable:
+		# 	child = pexpect.spawn("myfitnesspal store-password Danz1ty")
+		# 	child.expect("MyFitnessPal Password for Danz1ty:")
+		# 	child.sendline("senior")
 
 		app.run(debug=True)

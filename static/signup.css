@@ -41,3 +41,59 @@ li{
   border-top-left-radius: 0;
   border-top-right-radius: 0;
 }
+
+table#results {
+  font-family: Roboto, Arial, "Helvetica Neue", sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table#results td, table#results th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+table#results tr:nth-child(even){background-color: #f2f2f2;}
+
+.cellinfo{
+  position: relative;
+}
+.info{
+  display:none;
+  position:absolute;
+  z-index:100;
+  bottom: 125%;
+  left: 50%;
+  background-color: black;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  width: 120px;
+}
+
+.cellinfo:hover .info{
+  display:block;
+}
+
+table#results tr:hover .info {
+  background-color: #ddd;
+}
+table#results tr {
+   border-collapse: collapse;
+}
+
+table#results th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #033C73;
+  color: white;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
