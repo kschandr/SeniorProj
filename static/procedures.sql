@@ -36,7 +36,8 @@ CREATE TABLE `tbl_goals` (
   `username` varchar(45) NOT NULL,
   `lift` tinyint(1) DEFAULT '0',
   `run_5k` tinyint(1) DEFAULT '0',
-  `weight_goal` varchar(45) DEFAULT 'Maintain'
+  `weight_goal` varchar(45) DEFAULT 'Maintain',
+  `manual` varchar(145) default NULL
 );
 
 drop table if exists motivation;
@@ -82,11 +83,11 @@ CREATE TABLE `news` (
 
 drop table if exists food;
 create table food(
-	id bigint(10) auto_increment,
 	username varchar(45) not null,
-    food_id int(20) not null,
+    food_id varchar(45) not null,
     input_date DATE not null,
-    primary key (id)
+    serving_size int(11) DEFAULT '1',
+    primary key (username, food_id, input_date)
 );
 
 drop table if exists macros;
@@ -279,7 +280,7 @@ BEGIN
 END$$
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_getWorkout;
+
 
 /***sp_getWorkout. 
 get a workout plan for the day
@@ -289,6 +290,7 @@ Parameters:
 username: str, username 
 day: str
 */
+DROP PROCEDURE IF EXISTS sp_getWorkout;
 DELIMITER $$
 CREATE PROCEDURE `sp_getWorkout`(
     IN _username VARCHAR(45),
@@ -304,7 +306,6 @@ BEGIN
 END$$
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_getCompletion;
 
 /***sp_getCompletion. 
 returns a complete boolean if the user has a workout plan
@@ -314,6 +315,8 @@ Parameters:
 username: str, username 
 day: str
 */
+DROP PROCEDURE IF EXISTS sp_getCompletion;
+
 DELIMITER $$
 CREATE PROCEDURE `sp_getCompletion`(
     IN _username VARCHAR(45),
@@ -327,7 +330,7 @@ BEGIN
 END$$
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_workoutDone;
+
 
 /***sp_workoutDone. 
 updates the workout plan for the user to show that workout is completed
@@ -337,6 +340,7 @@ Parameters:
 username: str, username 
 day: str
 */
+DROP PROCEDURE IF EXISTS sp_workoutDone;
 DELIMITER $$
 CREATE PROCEDURE `sp_workoutDone`(
     IN _username VARCHAR(45),
@@ -439,10 +443,16 @@ delimiter $$
 CREATE  PROCEDURE `sp_addFood`(
 in _username varchar(45),
 in mfp_id bigint(20),
-in today date /*yyyy-mm-dd*/
+in today date /*yyyy-mm-dd*/,
+in serving int
 )
 begin
-	insert into food(username,food_id, input_date) values (_username, mfp_id, today);
+	insert into food
+		(username,food_id, input_date, serving_size) 
+    values 
+		(_username, mfp_id, today,serving)
+	on duplicate key update
+		serving_size = serving_size + serving;
 end $$
 delimiter ;
 
@@ -486,7 +496,7 @@ CREATE PROCEDURE `sp_getTodayFood`(
 in _username varchar(45),
 in _today date)
 begin
-	select food_id from food where username=_username and input_date=_today;
+	select food_id, serving_size from food where username=_username and input_date=_today;
 end $$
 delimiter ;
 

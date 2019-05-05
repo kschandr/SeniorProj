@@ -141,10 +141,11 @@ def getQuotes():
 	quote = data[0][0]
 	return quote
 
-def getMacros(food_id):
+def getMacros(food_id,serving=1):
+	serving = int(serving)
 	data = client.get_food_item_details(food_id)
-	return (round(data.calories,2), round(data.protein,2),
-		round(data.fat,2), round(data.carbohydrates,2))
+	return (round(data.calories,2)*serving, round(data.protein,2)*serving,
+		round(data.fat,2)*serving, round(data.carbohydrates,2)*serving)
 
 
 '''
@@ -248,12 +249,14 @@ def showNutrition():
 	user = request.cookies.get("current_user")
 	macros = run_SP(user, today, s_proc="sp_getMacros")
 	app.logger.info("in show nutrition: %s",macros)
-	cals = 0 if not macros else macros[0][0]
-	protein = 0 if not macros else macros[0][1]
-	fat = 0 if not macros else macros[0][2]
-	carb = 0 if not macros else macros[0][3]
-
-	return render_template('nutrition.html', cal=cals, protein=protein, fat=fat,carbs=carb)
+	macros = [0,0,0,0] if not macros else macros[0]
+	cals, protein, fat, carb = macros
+	food_servings = run_SP(user, today, s_proc = "sp_getTodayFood")
+	app.logger.info("todayfood: %s", food_servings)
+	food_data= [client.get_food_item_details(i[0]) for i in food_servings]
+	servings = [i[1] for i in food_servings]
+	return render_template('nutrition.html', cal=cals, \
+		protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings))
 
 	#return render_template('nutrition.html')
 
@@ -285,22 +288,26 @@ def searchResults(search):
 		else:
 				# display results
 				#app.logger.info("results: \n%s", res)
-				return render_template('foodsearch.html', form=search, res=res[:10])
+				food_items = res[:10]
+				app.logger.info("food_items: %s" , food_items)
+				data = [client.get_food_item_details(i.mfp_id) for i in res[:10]]
+				food_data = zip(food_items,data)
+				return render_template('foodsearch.html', form=search, res=food_data)
 
 @app.route('/addFood', methods=['POST'])
 def addFood():
-	foods = request.form.getlist("foodSelection")
+	foods = request.form.getlist("food_id")
+	servings = request.form.getlist("serving_size")
+	data = [i for i in list(zip(foods, servings)) if i[1] != ""]
 	user = request.cookies.get("current_user")
 	macros = run_SP(user, today, s_proc="sp_getMacros")
 	app.logger.info("in add food %s",macros)
 	macros = [0,0,0,0] if not macros else macros[0]
-	for food_id in foods:
-		app.logger.info("food id: %s",food_id)
-		app.logger.info("today: %s",today)
-		macros_one = list(getMacros(food_id))
+	for food_id, serving in data:
+		macros_one = list(getMacros(food_id, serving))
 		macros = [sum(x) for x in zip(macros,macros_one)]
-		app.logger.info("today %s, macros %s",today,macros)
-		run_SP(user,food_id,today,s_proc="sp_addFood")
+		app.logger.info("food id %s, serving %s,\n today %s", food_id,serving,today)
+		run_SP(user,food_id,today,serving, s_proc="sp_addFood")
 		run_SP(user,today,*macros,s_proc="sp_updateMacros")
 		#run_SP(user,today, *(getMacros(food_id)),s_proc="sp_updateMacros")
 	return render_template("nutrition.html")
