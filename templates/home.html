@@ -131,29 +131,43 @@
 
     <h3>{{ g3_title }}</h3>
 
-    <canvas id="chart" width="600" height="400"></canvas>
+    <canvas id="chart3" width="600" height="400"></canvas>
     <script>
       // bar chart data
-      var lineData = {
-        line_labels : [
+      
+        var barData = {
+        labels : [
           {% for item in line_labels %}
             "{{ item }}",
           {% endfor %}
         ],
         datasets : [{
-          fillColor: "rgba(151,187,205,0.2)",
+          label: 'Goal Weight',
+          fill : false,
+          fillColor: "transparent",
+          strokeColor: "rgba(0,0,0,1)",
+          pointColor: "rgba(0,0,0,1)",
+          data: [
+            {% for item in line_values %}
+                "{{ goal_weight }}",
+             {% endfor %}
+          ]
+        },{
+          label : 'Weight Progress',
+          fill : false,
+          fillColor: "transparent",
           strokeColor: "rgba(151,187,205,1)",
           pointColor: "rgba(151,187,205,1)",
-          pointStrokeColor: "#fff",
-          pointHighlightFill: "#fff",
-          pointHighlightStroke: "rgba(151,187,205,1)",
-          bezierCurve : false,
+          // pointStrokeColor: "#fff",
+          // pointHighlightFill: "#fff",
+          // pointHighlightStroke: "rgba(151,187,205,1)",
+          // bezierCurve : false,
           data : [
-      {% for item in line_values %}
-              {{ item }},
-            {% endfor %}]
-          }
-  ]
+             {% for item in line_values %}
+                "{{ item }}",
+             {% endfor %}
+          ]
+         }]
       }
       Chart.defaults.global.animationSteps = 50;
       Chart.defaults.global.tooltipYPadding = 16;
@@ -165,14 +179,14 @@
       Chart.defaults.global.scaleLineColor = "black";
       Chart.defaults.global.scaleFontSize = 16;
       // get bar chart canvas
-      var mychart = document.getElementById("chart").getContext("2d");
+      var mychart = document.getElementById("chart3").getContext("2d");
       steps = 10
-      line_max = {{ line_max }}
+      max = {{ line_max }}
       // draw bar chart
-      var LineChartDemo = new Chart(mychart).Line(lineData, {
+      var LineChartDemo = new Chart(mychart).Line(barData, {
         scaleOverride: true,
         scaleSteps: steps,
-        scaleStepWidth: Math.ceil(line_max / steps),
+        scaleStepWidth: Math.ceil(max / steps),
         scaleStartValue: 0,
         scaleShowVerticalLines: true,
         scaleShowGridLines : true,

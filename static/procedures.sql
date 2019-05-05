@@ -36,7 +36,8 @@ CREATE TABLE `tbl_goals` (
   `username` varchar(45) NOT NULL,
   `lift` tinyint(1) DEFAULT '0',
   `run_5k` tinyint(1) DEFAULT '0',
-  `weight_goal` varchar(45) DEFAULT 'Maintain'
+  `weight_change` varchar(45) DEFAULT 'Maintain',
+  `goal_weight` int NULL
 );
 
 drop table if exists motivation;
@@ -206,35 +207,7 @@ END$$
 DELIMITER ;
 
 
-DROP PROCEDURE IF EXISTS sp_editWeight;
 
-/***sp_editWeight
-edit the weight value for a user
-update the weight progress table with the inputted weight in pounds
-
-Parameters:
----
-weight: int, the weight in pounds
-username: str, username whose weight will be updated
-today: todays' date
-*/
-DELIMITER $$
-CREATE PROCEDURE `sp_editWeight`(
-    IN _weight INT,
-    IN _username VARCHAR(45),
-    in _today date
-    
-)
-BEGIN
-  UPDATE tbl_profile SET weight = _weight WHERE username = _username;
-  insert into weight_progress
-	(user, pounds, day) 
-  values
-    (_username,_weight,_today)
-  on duplicate key update  
-	pounds = _weight;
-END$$
-DELIMITER ;
 
 drop procedure if exists sp_editAgeSex;
 drop procedure if exists sp_editAgeSexActivity;
@@ -358,11 +331,12 @@ p_username: str, username
 bool_list: str, has the list of goals the user wants to acheive (training goal)
 weight: str, weight goal (maintain, lose or gain)
 */
-DELIMITER $$
+delimiter $$
 CREATE PROCEDURE `sp_editGoals`(
-	in p_username varchar(45),
-	in bool_list varchar(10),
-    in weight varchar(45)
+  in p_username varchar(45),
+  in bool_list varchar(10),
+    in weight_diff varchar(45),
+    in weight_goal int
 )
 BEGIN
 declare run boolean default 0;
@@ -370,9 +344,10 @@ declare weights boolean default 0;
 set run = if(find_in_set('2',bool_list) <> 0, 1,0);
 set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
 
-UPDATE tbl_goals SET lift = weights, run_5k=run, weight_goal = weight WHERE username = p_username;
-END$$
-DELIMITER ;
+INSERT INTO tbl_goals (username,lift,run_5k,weight_goal,goal_lbs) VALUES(p_username,weights,run,weight_diff,weight_goal) ON DUPLICATE KEY UPDATE    
+lift = weights, run_5k=run, weight_goal = weight_diff, goal_lbs = weight_goal;
+END $$
+delimiter ;
 
 DROP PROCEDURE IF EXISTS sp_getGoals;
 
@@ -383,14 +358,14 @@ Parameters:
 ---
 p_username: str, username 
 */
-DELIMITER $$
+delimiter $$
 CREATE PROCEDURE `sp_getGoals`(
-	in p_username varchar(45)
+  in p_username varchar(45)
 )
 BEGIN
-	select lift, run_5k, weight_goal from tbl_goals WHERE username = p_username;
-END$$
-DELIMITER ;
+  select lift, run_5k, weight_goal, goal_lbs from tbl_goals WHERE username = p_username;
+END $$
+delimiter ;
 
 
 DROP PROCEDURE IF EXISTS sp_getQuote;
@@ -497,6 +472,45 @@ CREATE PROCEDURE `sp_getWeightProgress`(
 )
 BEGIN
   select * from weight_progress where user=username;
+END $$
+delimiter ;
+
+drop procedure if exists sp_getWeight;
+delimiter $$
+create procedure `sp_getWeight`(
+  in p_username varchar(45)
+)
+BEGIN
+select pounds from weight_progress where user=p_username order by `day` DESC LIMIT 1;
+END $$
+delimiter ;
+
+drop procedure if exists sp_editWeight;
+
+/***sp_editWeight
+edit the weight value for a user
+update the weight progress table with the inputted weight in pounds
+
+Parameters:
+---
+weight: int, the weight in pounds
+username: str, username whose weight will be updated
+today: todays' date
+*/
+delimiter $$
+CREATE PROCEDURE `sp_editWeight`(
+    IN _weight INT,
+    IN _username VARCHAR(45),
+    in _today date
+)
+BEGIN
+  UPDATE tbl_profile SET weight = _weight WHERE username = _username;
+  insert into weight_progress
+  (user, pounds, day) 
+  values
+    (_username,_weight,_today)
+  on duplicate key update  
+  pounds = _weight;
 END $$
 delimiter ;
 
