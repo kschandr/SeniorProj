@@ -337,11 +337,18 @@ def showWorkout():
 	app.logger.info("today's day: %s", day)
 	app.logger.info("user: %s", user)
 
-	data = run_SP(user, day, s_proc= 'sp_getWorkout')
+	#data = run_SP(user, day, s_proc= 'sp_getWorkout')
 
 	workout = data[0][0]
 	muscle_group = data[0][1]
-
+	# workout = "GIANT SET\n12 reps alt. DB curls\n\
+	# 12 reps 1 arm overhead tricep extension\n\
+	# 21 method: 2 arm cable curls\n12 reps DB tricep kickbacks\
+	# 	\nSUPERSET\
+	# 	\n4x6 close grip bench press\
+	# 	\n4x6 EZ bar curls\
+	# 	"
+	# muscle_group = "arms"
 
 	try:
 		data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -486,7 +493,7 @@ def homePage():
 		day = calendar.day_name[my_date.weekday()]
 
 
-		muscle_group = run_SP(user, day, s_proc= 'sp_getWorkout')[0][1]
+		muscle_group =run_SP(user, day, s_proc= 'sp_getWorkout')[0][1]
 		#muscle_group = "arms" #for debugging purposes
 
 		pie_labels = ["protein", "carbohydrate", "fat"]
