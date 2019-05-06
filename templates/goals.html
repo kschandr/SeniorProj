@@ -37,37 +37,55 @@
         </div>
 
         <div class="jumbotron">
-        <h2>Weight Goal</h2>
-        <a href="edit_goals">Edit</a>
+            <div class="row">
+                <button type="button" class="btn btn-success">
+                    <a href="edit_goals"  style="color: rgb(255,255,255)">Edit</a>
+                </button>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col-lg-6">
+                    <table id="results">
+                        <tr>
+                            <th>Weight</th>
+                            <th></th>
+                        </tr>
+                       <tr>
+                            <td>Goal Weight</td>
+                            <td>{{goal_lbs}} lbs</td>
+                       </tr>
+                        <tr>
+                            <td>Current</td>
+                            <td>{{cur_weight}} lbs</td>
+                       </tr>
+                    </table>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <table id="results">
+                        <th>Fitness Goal</th>
+                        <th>Personal Record</th>
+                      {%if run_bool %}
+                        <tr>
+                            <td>Best 5k Time</td>
+                            <td>data</td>
+                        </tr>
+                      {% endif %}
+                      {%if lift_bool %}
+                        <tr>
+                                <td>Bench PR</td>
+                                <td>data</td>
+                        </tr><tr>
+                                <td>Squat PR</td>
+                                <td>data</td>
+                        </tr><tr>
+                                <td>Deadlift PR</td>
+                                <td>data</td>
+                        </tr>
+                      {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
 
-        <table>
-           <tr>
-                <td>{{weight_goal}} weight</td>
-           </tr>
-            <tr>
-                <td> Goal Weight: {{goal_lbs}} lbs , Current: {{cur_weight}} lbs</td>
-           </tr>
-        </table></div>
-
-        <div class="jumbotron">
-        <h2>PR Goal</h2>
-
-        <table>
-          {%if run_bool %}
-            <tr>
-                <th>Running Goal</th>
-                <td>Best 5km Time: </td>
-            </tr>
-          {% endif %}
-          {%if lift_bool %}
-            <tr>
-                    <th>Weightlifting Goal</th>
-                    <td>Bench PR: </td>
-                    <td>Squat PR:</td>
-                    <td>Deadlift PR:</td>
-            </tr>
-          {% endif %}
-        </table></div>
 
         <div class="jumbotron">
         <h2>Motivation</h2>
