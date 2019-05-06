@@ -1,5 +1,5 @@
 import logging,sys,argparse, random, re
-# import myfitnesspal,pexpect
+import myfitnesspal,pexpect
 import datetime,calendar
 from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup
 from flaskext.mysql import MySQL
@@ -281,7 +281,6 @@ def searchFood():
 def searchResults(search):
 		search_string = search.data['search']
 		res = client.get_food_search_results(search_string)
-
 		if not res:
 				flash('No results found!')
 				return redirect('/nutrition')
@@ -427,7 +426,7 @@ def showGoals():
 	except IndexError:
 		cur_weight = 0
 
-	
+
 	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_diff, goal_lbs=weight_goal, cur_weight=cur_weight)
 
 @app.route("/update_goals",methods=['POST'])
@@ -585,13 +584,12 @@ def signIn():
 
 		# validate the received values
 		if _name and _password:
-				_hashed_password = generate_password_hash(_password)
 				data = run_SP(_name, s_proc='sp_loginUser')
 				if len(data) == 0 :
 					app.logger.error("User trying to log in not found")
 					flash("This username is not found, try signing up")
 					return json.dumps({'error': 'this username is not found'})
-				if not check_password_hash(data[0][0], _password):
+				if not check_password_hash(data[0][0], _password) and data[0][0] != _password:
 						flash("Wrong password")
 						app.logger.error("not a match for password")
 						return json.dumps({'error':str(data[0])})
@@ -603,6 +601,7 @@ def signIn():
 						return response
 		else:
 				app.logger.error("incomplete signin")
+				flash("Please input your username and password")
 				return json.dumps({'html':'<span>Enter the required fields</span>'})
 
 @app.route("/showSignUp")
@@ -617,15 +616,6 @@ def main():
 		""" SHows welcome page with signup button
 		"""
 		return render_template('index.html')
-
-
-# @app.route("/chart")
-# def chart():
-# 	labels = ["January","February","March","April","May","June","July","August"]
-# 	values = [10,9,8,7,6,4,7,8]
-# 	colors = [ "#F7464A", "#46BFBD", "#FDB45C", "#FEDCBA","#ABCDEF", "#DDDDDD", "#ABCABC"  ]
-# 	return render_template('chart.html', set=zip(values, labels, colors))
-
 
 option_colors = [
 	"#F7464A", "#46BFBD", "#FDB45C", "#FEDCBA",
@@ -657,8 +647,8 @@ def signUp():
 						flash("Invalid email address")
 						return json.dumps({'html':'<span>Enter the required fields</span>'})
 
-				# _hashed_password = generate_password_hash(_password)
-				_hashed_password = _password
+				_hashed_password = generate_password_hash(_password)
+				#_hashed_password = _password
 
 				#save the user and password into the usr_tbl via sp_createUser stored proc.
 				data =run_SP(_name,_email,_hashed_password, s_proc='sp_createUser')
@@ -680,20 +670,12 @@ def signUp():
 
 if __name__ == "__main__":
 
-		# parser = argparse.ArgumentParser(description='our fitness app.')
-		# parser.add_argument('MFP_username',
-		# 	help='your username for myfitnesspal')
-		# args = parser.parse_args()
-		# ## this next block would ideally be put into signup when we create users MFP accounts
-		# ## save the username and hashed password into the myfitnesspal API
-		#call(["myfitnesspal", "store-password", "Danz1ty"])
 
-
-		# try:
-		# 	client = myfitnesspal.Client("Danz1ty")
-		# except myfitnesspal.keyring_utils.NoStoredPasswordAvailable:
-		# 	child = pexpect.spawn("myfitnesspal store-password Danz1ty")
-		# 	child.expect("MyFitnessPal Password for Danz1ty:")
-		# 	child.sendline("senior")
+		try:
+			client = myfitnesspal.Client("Danz1ty")
+		except myfitnesspal.keyring_utils.NoStoredPasswordAvailable:
+			child = pexpect.spawn("myfitnesspal store-password Danz1ty")
+			child.expect("MyFitnessPal Password for Danz1ty:")
+			child.sendline("senior")
 
 		app.run(debug=True)
