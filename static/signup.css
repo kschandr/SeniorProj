@@ -42,6 +42,7 @@ li{
   border-top-right-radius: 0;
 }
 
+/*source table css: https://www.w3schools.com/css/tryit.asp?filename=trycss_table_fancy*/
 table#results {
   font-family: Roboto, Arial, "Helvetica Neue", sans-serif;
   border-collapse: collapse;
@@ -55,9 +56,12 @@ table#results td, table#results th {
 
 table#results tr:nth-child(even){background-color: #f2f2f2;}
 
+/*hover message source: https://stackoverflow.com/questions/13845003/tooltips-for-cells-in-html-table-no-javascrip*/
 .cellinfo{
   position: relative;
 }
+
+/* hidden message  before hover */
 .info{
   display:none;
   position:absolute;
@@ -72,6 +76,7 @@ table#results tr:nth-child(even){background-color: #f2f2f2;}
   width: 120px;
 }
 
+/* hover message arrow */
 .info::after {
   content: "";
   position: absolute;
@@ -83,6 +88,7 @@ table#results tr:nth-child(even){background-color: #f2f2f2;}
   border-color: #555 transparent transparent transparent;
 }
 
+/* upon hover display message block */
 .cellinfo:hover .info{
   display:block;
 }
