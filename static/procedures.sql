@@ -271,7 +271,7 @@ CREATE PROCEDURE `sp_getWorkout`(
 BEGIN
   select workout, muscle_group from exercises
   where id
-  IN (select id from plans
+  IN (select max(id) from plans
 	  where day = _day and goal IN (
 			select weight_goal from tbl_goals
 				where username=_username));
