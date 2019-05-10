@@ -61,6 +61,22 @@
                 </div>
                 <div class="col-md-6 col-lg-6">
                     <table id="results">
+                        <tr>
+                            <th>Calories</th>
+                            <th></th>
+                        </tr>
+                       <tr>
+                            <td>Goal Daily Calories</td>
+                            <td>{{goal_cals}} cals</td>
+                       </tr>
+                        <tr>
+                            <td>Today's Calories</td>
+                            <td>{{today_cals}} cals</td>
+                       </tr>
+                    </table>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <table id="results">
                         <th>Fitness Goal</th>
                         <th>Personal Record</th>
                       {%if run_bool %}

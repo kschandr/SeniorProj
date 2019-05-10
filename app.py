@@ -255,8 +255,27 @@ def showNutrition():
 	app.logger.info("todayfood: %s", food_servings)
 	food_data= [client.get_food_item_details(i[0]) for i in food_servings]
 	servings = [i[1] for i in food_servings]
-	return render_template('nutrition.html', cal=cals, \
-		protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings))
+
+	try:
+		data = run_SP(user, today, s_proc='sp_getCompletion')
+		app.logger.info(data)
+		done = data[0][0]
+		if done == "done":
+			_workout_done = True
+		else:
+			_workout_done = False
+		#super janky try/except block... should change
+	except IndexError:
+		_workout_done = False
+
+	my_date = date.today()
+	day = calendar.day_name[my_date.weekday()]
+	_workout_cal = run_SP(user, day, s_proc="sp_getWorkout")[0][2]
+	app.logger.info("cals")
+	app.logger.info(_workout_cal)
+	_net_cal = cals - _workout_cal
+	return render_template('nutrition.html', cal=cals, workout_done = _workout_done, workout_cal= _workout_cal, \
+		net_cal= _net_cal, protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings))
 
 	#return render_template('nutrition.html')
 
@@ -336,7 +355,7 @@ def showWorkout():
 	app.logger.info("today's day: %s", day)
 	app.logger.info("user: %s", user)
 
-	#data = run_SP(user, day, s_proc= 'sp_getWorkout')
+	data = run_SP(user, day, s_proc= 'sp_getWorkout')
 
 	workout = data[0][0]
 	muscle_group = data[0][1]
@@ -421,19 +440,29 @@ def showGoals():
 		run_bool = True if data[0][1]==1 else False
 		weight_diff = data[0][2]
 		weight_goal = data[0][3]
+		cal_goal = data[0][4]
 	except IndexError:
 		lift_bool = True
 		run_bool = True
 		weight_diff = 0
 		weight_goal = 0
+		cal_goal = 0
 
 	try:
 		cur_weight = run_SP(user,s_proc='sp_getWeight')[0][0]
 	except IndexError:
 		cur_weight = 0
 
+	try:
+		cur_cals = run_SP(user,today, s_proc='sp_getMacros')[0][0]
+	except IndexError:
+		cur_cals = 0
 
-	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_diff, goal_lbs=weight_goal, cur_weight=cur_weight)
+
+
+
+	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_diff, \
+		goal_lbs=weight_goal, cur_weight=cur_weight, goal_cals=cal_goal, today_cals=cur_cals)
 
 @app.route("/update_goals",methods=['POST'])
 @login_required
@@ -450,7 +479,23 @@ def updateGoals():
 	app.logger.info("_pr: %s", _pr)
 	# 1 = weightlifting, 2 = 5k
 	_weight_goal = request.form['goal_weight']
-	run_SP(_user,_pr,_weight_diff, _weight_goal, s_proc="sp_editGoals")
+	_cal_goal = request.form['cal_goal']
+
+
+
+	if not _weight_goal:
+		try:
+			_weight_goal = run_SP(_user,s_proc='sp_getGoals')[0][3]
+		except IndexError:
+			_weight_goal = 0
+
+	if not _cal_goal:
+		try:
+			_cal_goal = run_SP(_user, s_proc='sp_getGoals')[0][4]
+		except IndexError:
+			_cal_goal = 0
+
+	run_SP(_user,_pr,_weight_diff, _weight_goal, _cal_goal, s_proc="sp_editGoals")
 	return render_template('goals.html')
 
 @app.route("/edit_goals")
@@ -492,7 +537,9 @@ def homePage():
 		day = calendar.day_name[my_date.weekday()]
 
 
-		muscle_group =run_SP(user, day, s_proc= 'sp_getWorkout')[0][1]
+		muscle_group =run_SP(user, day, s_proc= 'sp_getWorkout')
+		app.logger.info(muscle_group)
+		muscle_group = muscle_group[0][1]
 		#muscle_group = "arms" #for debugging purposes
 
 		pie_labels = ["protein", "carbohydrate", "fat"]
@@ -534,6 +581,11 @@ def homePage():
 			goal_weight = 0
 
 		try:
+			goal_cals = run_SP(user,s_proc='sp_getGoals')[0][4]
+		except IndexError:
+			goal_cals = 0
+
+		try:
 			data = run_SP(user, my_date, s_proc='sp_getCompletion')
 			app.logger.info(data)
 			done = data[0][0]
@@ -551,9 +603,9 @@ def homePage():
 		return render_template('home.html', user=user,calories=macros[0],
 						quote=quote,workout=muscle_group,done=workout_done,
 						g1_title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors),
-							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(cals)+500),
+							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(max(cals),goal_cals)+300),
 							g3_title="Weight Progress", line_labels=line_labels, line_values=line_values, line_max=(max(line_values)+100),
-							goal_weight=goal_weight)
+							goal_weight=goal_weight, goal_cals=goal_cals)
 
 @app.route("/signOut")
 def signOut():

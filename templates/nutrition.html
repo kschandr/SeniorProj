@@ -49,6 +49,10 @@
                        <tr>
                             <th><pre>Calories</pre></th>
                             <td><pre>{{cal}} cal</pre></td>
+                            {% if workout_done %}
+                            <td><pre> - {{workout_cal}} cal (exercise)</pre></td>
+                            <td><pre> = {{net_cal}} cal</pre></td>
+                            {% endif %}
                        </tr>
                        <tr>
                             <th><pre>Carbohydrates</pre></th>

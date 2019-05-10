@@ -161,6 +161,15 @@ BEGIN
           p_username
         );
 
+        insert into tbl_goals
+        (
+          username, weight_goal
+        )
+        values
+        (
+          p_username, 'Maintain'
+        );
+
     END IF;
 END$$
 DELIMITER ;
@@ -335,7 +344,7 @@ p_username: str, username
 bool_list: str, has the list of goals the user wants to acheive (training goal)
 weight: str, weight goal (maintain, lose or gain)
 */
-DROP PROCEDURE IF EXISTS sp_editGoals;
+drop procedure if exists sp_editGoals; 
 delimiter $$
 CREATE PROCEDURE `sp_editGoals`(
   in p_username varchar(45),
@@ -349,12 +358,9 @@ declare weights boolean default 0;
 set run = if(find_in_set('2',bool_list) <> 0, 1,0);
 set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
 
-INSERT INTO tbl_goals 
-	(username,lift,run_5k,weight_goal,goal_lbs) 
-VALUES
-	(p_username,weights,run,weight_diff,weight_goal) 
-ON DUPLICATE KEY UPDATE
-	lift = weights, run_5k=run, weight_goal = weight_diff, goal_lbs = weight_goal;
+UPDATE tbl_goals set 
+lift=weights,run_5k=run,weight_goal=weight_diff,goal_lbs=weight_goal
+where username=p_username;
 END $$
 delimiter ;
 
@@ -367,13 +373,13 @@ Parameters:
 ---
 p_username: str, username
 */
-DROP PROCEDURE IF EXISTS sp_getGoals;
+drop procedure if exists sp_getGoals;
 delimiter $$
 CREATE PROCEDURE `sp_getGoals`(
   in p_username varchar(45)
 )
 BEGIN
-  select lift, run_5k, weight_goal, goal_lbs from tbl_goals WHERE username = p_username;
+  select lift, run_5k, weight_goal, goal_lbs, goal_cals from tbl_goals WHERE username = p_username;
 END $$
 delimiter ;
 
