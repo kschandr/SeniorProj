@@ -113,7 +113,7 @@ CREATE TABLE `weight_progress` (
 Stored procedures
 */
 
-DROP PROCEDURE IF EXISTS sp_createUser;
+
 
 /*** sp_createUser
 Updates a user login and password into the tbl_user.
@@ -125,6 +125,7 @@ p_email: str, email address
 p_password: str, hashed password
 
 */
+DROP PROCEDURE IF EXISTS sp_createUser;
 DELIMITER $$
 CREATE  PROCEDURE `sp_createUser`(
     IN p_username VARCHAR(45),
@@ -323,7 +324,7 @@ BEGIN
 END$$
 DELIMITER ;
 
-DROP PROCEDURE IF EXISTS sp_editGoals;
+
 
 /***sp_editGoals.
 updates goals for the user
@@ -334,6 +335,7 @@ p_username: str, username
 bool_list: str, has the list of goals the user wants to acheive (training goal)
 weight: str, weight goal (maintain, lose or gain)
 */
+DROP PROCEDURE IF EXISTS sp_editGoals;
 delimiter $$
 CREATE PROCEDURE `sp_editGoals`(
   in p_username varchar(45),
@@ -347,12 +349,16 @@ declare weights boolean default 0;
 set run = if(find_in_set('2',bool_list) <> 0, 1,0);
 set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
 
-INSERT INTO tbl_goals (username,lift,run_5k,weight_goal,goal_lbs) VALUES(p_username,weights,run,weight_diff,weight_goal) ON DUPLICATE KEY UPDATE
-lift = weights, run_5k=run, weight_goal = weight_diff, goal_lbs = weight_goal;
+INSERT INTO tbl_goals 
+	(username,lift,run_5k,weight_goal,goal_lbs) 
+VALUES
+	(p_username,weights,run,weight_diff,weight_goal) 
+ON DUPLICATE KEY UPDATE
+	lift = weights, run_5k=run, weight_goal = weight_diff, goal_lbs = weight_goal;
 END $$
 delimiter ;
 
-DROP PROCEDURE IF EXISTS sp_getGoals;
+
 
 /***sp_getGoals.
 get goals for the user
@@ -361,6 +367,7 @@ Parameters:
 ---
 p_username: str, username
 */
+DROP PROCEDURE IF EXISTS sp_getGoals;
 delimiter $$
 CREATE PROCEDURE `sp_getGoals`(
   in p_username varchar(45)

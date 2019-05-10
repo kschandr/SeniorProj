@@ -300,7 +300,6 @@ def addFood():
 	data = [i for i in list(zip(foods, servings)) if i[1] != ""]
 	user = request.cookies.get("current_user")
 	macros = run_SP(user, today, s_proc="sp_getMacros")
-	app.logger.info("in add food %s",macros)
 	macros = [0,0,0,0] if not macros else macros[0]
 	for food_id, serving in data:
 		macros_one = list(getMacros(food_id, serving))
