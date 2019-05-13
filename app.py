@@ -255,6 +255,11 @@ def showNutrition():
 	app.logger.info("todayfood: %s", food_servings)
 	food_data= [client.get_food_item_details(i[0]) for i in food_servings]
 	servings = [i[1] for i in food_servings]
+	meal = [i[2] for i in food_servings]
+	for i,m in enumerate(meal):
+		if i > 0 and m == meal[i-1]:
+			meal[i] = ""
+	app.logger.info("meal: %s", meal)
 
 	try:
 		data = run_SP(user, today, s_proc='sp_getCompletion')
@@ -275,7 +280,7 @@ def showNutrition():
 	app.logger.info(_workout_cal)
 	_net_cal = cals - _workout_cal
 	return render_template('nutrition.html', cal=cals, workout_done = _workout_done, workout_cal= _workout_cal, \
-		net_cal= _net_cal, protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings))
+		net_cal= _net_cal, protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings, meal))
 
 	#return render_template('nutrition.html')
 
@@ -316,6 +321,9 @@ def searchResults(search):
 def addFood():
 	foods = request.form.getlist("food_id")
 	servings = request.form.getlist("serving_size")
+	meal = request.form['meal_selected']
+	meal = "Breakfast" if meal=="" else meal
+	app.logger.info(meal)
 	data = [i for i in list(zip(foods, servings)) if i[1] != ""]
 	user = request.cookies.get("current_user")
 	macros = run_SP(user, today, s_proc="sp_getMacros")
@@ -324,7 +332,31 @@ def addFood():
 		macros_one = list(getMacros(food_id, serving))
 		macros = [sum(x) for x in zip(macros,macros_one)]
 		app.logger.info("food id %s, serving %s,\n today %s", food_id,serving,today)
-		run_SP(user,food_id,today,serving, s_proc="sp_addFood")
+		run_SP(user,food_id,today,serving,meal, s_proc="sp_addFood")
+		run_SP(user,today,*macros,s_proc="sp_updateMacros")
+		#run_SP(user,today, *(getMacros(food_id)),s_proc="sp_updateMacros")
+	return render_template("nutrition.html")
+
+@app.route('/editFood', methods=['GET','POST'])
+def editFood():
+	if request.method == "POST":
+		app.logger.info("gh")
+	foods = request.form.getlist("f")
+	servings = request.form.getlist("s")
+	app.logger.info("foo %s\n s %s\n", foods, servings)
+	data = [i for i in list(zip(foods, servings)) if i[1] != ""]
+	app.logger.info("data: %s", data)
+	user = request.cookies.get("current_user")
+
+	for food_id, serving in data:
+		run_SP(user, food_id, today, serving, s_proc="sp_editFood")
+
+	data = run_SP(user, today, s_proc="sp_getTodayFood")
+	app.logger.info(data)
+	macros=[0,0,0,0]
+	for food_id, serving,meal in data:
+		macros_one = list(getMacros(food_id, serving))
+		macros = [sum(x) for x in zip(macros,macros_one)]
 		run_SP(user,today,*macros,s_proc="sp_updateMacros")
 		#run_SP(user,today, *(getMacros(food_id)),s_proc="sp_updateMacros")
 	return render_template("nutrition.html")
@@ -560,7 +592,7 @@ def homePage():
 				cals.append(cal)
 			else:
 				cals.append(0)
-		app.logger.info(cals)
+		app.logger.info("cals: %s", cals)
 
 		#WEIGHT PROGRESS CHART
 		all_weight_updates = run_SP(user, s_proc='sp_getWeightProgress')
@@ -569,22 +601,23 @@ def homePage():
 		line_values = []
 		line_labels = []
 		for item in all_weight_updates:
-
 			line_values.append(item[1])
 			line_labels.append(item[2].strftime("%m-%d-%Y"))
 		app.logger.info(line_labels)
 		app.logger.info(line_values)
+		line_max = 100 if not line_values else (max(line_values) + 100)
 
 		try:
 			goal_weight = run_SP(user,s_proc='sp_getGoals')[0][3]
 		except IndexError:
 			goal_weight = 0
-
+		goal_weight = 0 if not goal_weight else goal_weight
 		try:
 			goal_cals = run_SP(user,s_proc='sp_getGoals')[0][4]
 		except IndexError:
 			goal_cals = 0
-
+		goal_cals = 0 if not goal_cals else goal_cals
+		app.logger.info(goal_cals)
 		try:
 			data = run_SP(user, my_date, s_proc='sp_getCompletion')
 			app.logger.info(data)
@@ -596,16 +629,12 @@ def homePage():
 			#super janky try/except block... should change
 		except IndexError:
 			workout_done = False
-		## stores totals in calories, macros (dict form)
-		#day_calories = client.get_date(2019,2,2).totals
-		#app.logger.info("user day calories: %d", day_calories)
-		#return render_template('home.html', day_calories=day_calories, user=user)
 		return render_template('home.html', user=user,calories=macros[0],
 						quote=quote,workout=muscle_group,done=workout_done,
 						g1_title="Today's Macros", set=zip(pie_values, pie_labels, pie_colors),
-							g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(max(cals),goal_cals)+300),
-							g3_title="Weight Progress", line_labels=line_labels, line_values=line_values, line_max=(max(line_values)+100),
-							goal_weight=goal_weight, goal_cals=goal_cals)
+						g2_title="Calories Over Last Week", labels=dates, values=cals, max=(max(max(cals),goal_cals)+300),
+						g3_title="Weight Progress", line_labels=line_labels, line_values=line_values, line_max=line_max,
+						goal_weight=goal_weight, goal_cals=goal_cals)
 
 @app.route("/signOut")
 def signOut():

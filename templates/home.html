@@ -138,11 +138,13 @@
     </script>
 
     <h3>{{ g3_title }}</h3>
-
+    {% if not line_values %}
+        No data yet.
+    {% else %}
     <canvas id="chart3" width="600" height="400"></canvas>
     <script>
       // bar chart data
-      
+
         var barData = {
         labels : [
           {% for item in line_labels %}
@@ -203,7 +205,7 @@
         bezierCurve: false,
       });
     </script>
-
+    {% endif %}
 
   </div>
             <div class="jumbotron">
