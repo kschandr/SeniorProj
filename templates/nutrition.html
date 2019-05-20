@@ -7,6 +7,8 @@
 
     <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
     <link href="../static/signup.css" rel="stylesheet">
+    <script src="../static/js/jquery-3.1.0.min.js"></script>
+    <!-- <script src="../static/js/editFood.js"></script> -->
 
 </head>
 
@@ -71,17 +73,51 @@
                     </table>
                 </div>
                 <div class="col-md-6 col-lg-6">
+             <!--        {% if food_ids %}
+                    <div class="row"> -->
+                        <script>
+                            $(function() {
+                                $('#editFood').click(function() {
+
+                                    $.ajax({
+                                        url: '/editFood',
+                                        data: $('form').serialize(),
+                                        type: 'POST',
+                                        success: function(response) {
+                                            console.log(response);
+                                            window.location.href = "nutrition"
+                                        },
+                                        error: function(error) {
+                                            console.log(error);
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
+                        <button id="editFood" class="btn btn-sm btn-primary" type="button">Edit</button>
+ <!--                    </div>
+                    {% endif %} -->
+                    <form class="form-update">
                     <table id="results">
                         <tr>
                             <th> Food Name</th>
                             <th> Serving Size</th>
+                            <th> Edit Serving </th>
                         </tr>
-                        {% for f,s in food_ids %}
-                            <tr> <td>{{f.name}}</td>
+                        {% for f,s,m in food_ids %}
+                        {% if m != "" %}
+                            <tr><th colspan="3" bgcolor="#65B7B7">{{m}}</th></tr>
+                        {% endif %}
+                            <tr>
+                                <td>{{f.name}}</td>
                                 <td>{{s}} x {{f.serving}}</td>
+                                <td><input type="number" name="s"/>
+                                    <input type="hidden" name="f" value="{{f.mfp_id}}"/>
+                                </td>
                             </tr>
                         {% endfor %}
                     </table>
+                </form>
                 </div>
             </div>
 

@@ -64,12 +64,14 @@ drop table if exists tbl_user;
 /***tbl_user
 login and credentials for user
 */
-CREATE TABLE tbl_user (
-  user_id BIGINT AUTO_INCREMENT,
-  user_username VARCHAR(45) NULL,
-  user_email VARCHAR(45) NULL,
-  user_password VARCHAR(95) NULL,
-  PRIMARY KEY (user_id));
+CREATE TABLE `tbl_user` (
+  `user_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_username` varchar(45) NOT NULL,
+  `user_email` varchar(45) DEFAULT NULL,
+  `user_password` varchar(95) DEFAULT NULL,
+  PRIMARY KEY (`user_id`),
+  UNIQUE KEY `user_username` (`user_username`)
+);
 
 drop table if exists tbl_profile;
 
@@ -91,8 +93,11 @@ CREATE TABLE `tbl_goals` (
   `username` varchar(45) NOT NULL,
   `lift` tinyint(1) DEFAULT '0',
   `run_5k` tinyint(1) DEFAULT '0',
-  `weight_change` varchar(45) DEFAULT 'Maintain',
-  `goal_weight` int NULL
+  `weight_goal` varchar(45) DEFAULT 'Maintain',
+  `goal_lbs` int(11) DEFAULT '100',
+  `goal_cals` int(11) DEFAULT '1200',
+  KEY `tbl_goals` (`username`),
+  CONSTRAINT `tbl_goals_ibfk_1` FOREIGN KEY (`username`) REFERENCES `tbl_user` (`user_username`)
 );
 
 drop table if exists motivation;
@@ -142,6 +147,7 @@ CREATE TABLE `food` (
   `food_id` varchar(45) NOT NULL,
   `input_date` date NOT NULL,
   `serving_size` int(11) DEFAULT '1',
+  `meal` varchar(45) NOT NULL DEFAULT 'Breakfast',
   PRIMARY KEY (`username`,`food_id`,`input_date`)
 );
 
@@ -182,7 +188,7 @@ p_password: str, hashed password
 */
 DROP PROCEDURE IF EXISTS sp_createUser;
 DELIMITER $$
-CREATE  PROCEDURE `sp_createUser`(
+CREATE PROCEDURE `sp_createUser`(
     IN p_username VARCHAR(45),
     IN p_email VARCHAR(45),
     IN p_password VARCHAR(93)
@@ -319,6 +325,7 @@ DELIMITER ;
 
 
 
+
 /***sp_getWorkout.
 get a workout plan for the day
 
@@ -334,12 +341,12 @@ CREATE PROCEDURE `sp_getWorkout`(
     IN _day VARCHAR(20)
 )
 BEGIN
-  select workout, muscle_group from exercises
-  where id
-  IN (select max(id) from plans
-	  where day = _day and goal IN (
-			select weight_goal from tbl_goals
-				where username=_username));
+  select workout, muscle_group, cals from exercises 
+  where id 
+  IN (select id from plans 
+	  where day = _day and goal IN ((
+			select weight_goal from tbl_goals 
+				where username=_username), "Maintain"));
 END$$
 DELIMITER ;
 
@@ -402,10 +409,11 @@ weight: str, weight goal (maintain, lose or gain)
 drop procedure if exists sp_editGoals; 
 delimiter $$
 CREATE PROCEDURE `sp_editGoals`(
-  in p_username varchar(45),
-  in bool_list varchar(10),
+	in p_username varchar(45),
+	in bool_list varchar(10),
     in weight_diff varchar(45),
-    in weight_goal int
+    in weight_goal int,
+    in cals int
 )
 BEGIN
 declare run boolean default 0;
@@ -414,12 +422,10 @@ set run = if(find_in_set('2',bool_list) <> 0, 1,0);
 set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
 
 UPDATE tbl_goals set 
-lift=weights,run_5k=run,weight_goal=weight_diff,goal_lbs=weight_goal
+lift=weights,run_5k=run,weight_goal=weight_diff,goal_lbs=weight_goal, goal_cals=cals
 where username=p_username;
 END $$
-delimiter ;
-
-
+delimiter; 
 
 /***sp_getGoals.
 get goals for the user
@@ -486,15 +492,37 @@ CREATE  PROCEDURE `sp_addFood`(
 in _username varchar(45),
 in mfp_id bigint(20),
 in today date /*yyyy-mm-dd*/,
-in serving int
+in serving int,
+in _meal varchar(45)
 )
 begin
 	insert into food
-		(username,food_id, input_date, serving_size)
+		(username,food_id, input_date, serving_size, meal)
     values
-		(_username, mfp_id, today,serving)
+		(_username, mfp_id, today,serving, _meal)
 	on duplicate key update
-		serving_size = serving_size + serving;
+		serving_size = serving_size + serving, meal=_meal;
+end $$
+delimiter ;
+
+drop procedure if exists sp_editFood;
+delimiter $$
+CREATE  PROCEDURE `sp_editFood`(
+in _username varchar(45),
+in mfp_id bigint(20),
+in today date /*yyyy-mm-dd*/,
+in serving int
+)
+begin
+	if (serving <= 0)
+    then
+		delete from food 
+        where username=_username and input_date=today and food_id=mfp_id;
+    else
+		update food 
+        set serving_size =serving 
+        where username=_username and input_date=today and food_id=mfp_id;
+	end if;
 end $$
 delimiter ;
 
@@ -538,7 +566,7 @@ CREATE PROCEDURE `sp_getTodayFood`(
 in _username varchar(45),
 in _today date)
 begin
-	select food_id, serving_size from food where username=_username and input_date=_today;
+	select food_id, serving_size,meal from food where username=_username and input_date=_today order by meal;
 end $$
 delimiter ;
 
