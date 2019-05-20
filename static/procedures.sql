@@ -4,6 +4,61 @@ use kaysha;
 Table stuff
 */
 
+drop table if exists alt_workouts;
+create table alt_workouts (
+user varchar(45) not null,
+type1 varchar(15) not null,
+time1 varchar(10) not null,
+type2 varchar(15) not null,
+time2 varchar(10) not null,
+date DATE not null,
+primary key (user, date, type1, type2));
+
+drop procedure if exists sp_getAltWorkouts1;
+delimiter $$
+create procedure sp_getAltWorkouts1 (
+in p_username varchar(45),
+in p_date DATE
+)
+begin
+select type1,time1 from alt_workouts where user=p_username and date=p_date;
+END $$
+delimiter ;
+
+drop procedure if exists sp_getAltWorkouts2;
+delimiter $$
+create procedure sp_getAltWorkouts2 (
+in p_username varchar(45),
+in p_date DATE
+)
+begin
+select type2,time2 from alt_workouts where user=p_username and date=p_date;
+END $$
+delimiter ;
+
+
+drop procedure if exists sp_setAltWorkouts;
+delimiter $$
+create procedure sp_setAltWorkouts (
+in p_username varchar(45),
+in p_date DATE,
+in p_type1 varchar(15),
+in p_time1 varchar(10),
+in p_type2 varchar(15),
+in p_time2 varchar(10)
+)
+begin
+insert into alt_workouts (user, date, type1, time1, type2, time2) 
+values (p_username, p_date, p_type1, p_time1, p_type2, p_time2);
+END $$
+delimiter ;
+
+
+
+
+
+
+
 drop table if exists tbl_user;
 
 /***tbl_user

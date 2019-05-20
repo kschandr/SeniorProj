@@ -368,7 +368,7 @@ def editFood():
 WORKOUT PAGE
 ------
 '''
-
+@app.route("/workout?alt_workout1=bike&alt_workout2=run")
 @app.route("/workout")
 @login_required
 def showWorkout():
@@ -391,14 +391,6 @@ def showWorkout():
 
 	workout = data[0][0]
 	muscle_group = data[0][1]
-	# workout = "GIANT SET\n12 reps alt. DB curls\n\
-	# 12 reps 1 arm overhead tricep extension\n\
-	# 21 method: 2 arm cable curls\n12 reps DB tricep kickbacks\
-	# 	\nSUPERSET\
-	# 	\n4x6 close grip bench press\
-	# 	\n4x6 EZ bar curls\
-	# 	"
-	# muscle_group = "arms"
 
 	try:
 		data = run_SP(user, my_date, s_proc='sp_getCompletion')
@@ -412,8 +404,20 @@ def showWorkout():
 	except IndexError:
 		workout_done = False
 
+	alt_chosen=False
+	alt_info = ""
+	data1 = run_SP(user, today, s_proc='sp_getAltWorkouts1')
+	data2 = run_SP(user, today, s_proc='sp_getAltWorkouts2')
+	if data1:
+		alt_chosen=True
+		alt_info = data1[0][0] + ", " + data1[0][1] + "mins"
+
+	if data2:
+		alt_info = alt_info + data2[0][0] + ", " + data2[0][1] + "mins"
+
 	return render_template('workout.html', quote=quote, workout=workout,
-				muscle_group=muscle_group, workout_done=workout_done)
+				muscle_group=muscle_group, workout_done=workout_done, 
+				alternate_chosen=alt_chosen, alternate=alt_info)
 
 @app.route('/workoutDone')
 @login_required
@@ -421,12 +425,41 @@ def workoutDone():
 	""" Clears out the planned workout when user clicks done!
 
 	"""
-
 	_user = request.cookies.get("current_user")
 	my_date = date.today()
 	run_SP(_user, my_date,s_proc='sp_workoutDone')
 
 	return render_template('workout.html', workoutDone=True)
+
+@app.route("/update_workouts")
+@login_required
+def udpateWorkout():
+	_w1 = request.form['alt_workout1']
+	_w2 = request.form['alt_workout2']
+	_t1 = request.form['time_1']
+	_t2 = request.form['time_2']
+
+	if not _w2:
+		try:
+			_w2 = run_SP(_user,today,s_proc='sp_getAltWorkouts2')[0][0]
+			_t2 = run_SP(_user,today,s_proc='sp_getAltWorkouts2')[0][1]
+		except IndexError:
+			_w2 = ""
+			_t2 = ""
+
+	run_SP(_user,today,_w1,_t1,_w2,_w2, s_proc="sp_setAltWorkouts")
+	return redirect("workout")
+
+
+#work on this
+@app.route("/edit_workouts")
+@login_required
+def altWorkout():
+	""" User can update alternate workouts
+
+	"""
+	_user = request.cookies.get("current_user")
+	return render_template("edit_workouts.html", alt_workouts=["run", "walk", "bike"])
 
 
 
@@ -535,6 +568,8 @@ def updateGoals():
 def editGoals():
 	weights = ["Lose", "Maintain", "Gain"]
 	return render_template("edit_goals.html", weights = weights)
+
+
 
 
 

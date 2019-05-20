@@ -37,42 +37,8 @@
         <div class="jumbotron">
             <div class="row">
                 <div class="col-md-6 col-lg-6">
-                    {% if not workout_done %}
-                    <h2>Today's Workout</h2>
-                    <table>
-                       <tr>
-                            <th>{{muscle_group}} Exercise</th>
-                       </tr>
-                       <tr>
-                            <td><pre>{{workout}}</pre></td>
-                       </tr>
-                       <tr> <a href="workoutDone">Done!</a> </tr>
-                    </table>
-                    {% else %}
-                    <h2>Congratulations!</h2>
-                    <table>
-                       <tr>
-                            <th>You finished today's workout!</th>
-                       </tr>
-                       <tr>
-                            <td><pre>Remember to hydrate and rest!</pre></td>
-                       </tr>
-                    </table>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 col-lg-6">
                     <h2>Alternate Workouts</h2>
-                    {% if alternate_chosen %}
-                    {{alternate}}
-
-                    {% else %}
-                    <div class="row">
-                        <button type="button" class="btn btn-success">
-                            <a href="edit_workouts"  style="color: rgb(255,255,255)">Add workout</a>
-                        </button>
-                    </div>
-                    {% endif %}
-                    <!-- <form class="form-update">
+                    <form class="form-update">
                     <table id='alternates'>
                         <tr>
                             <th>Select:</th>
@@ -88,8 +54,12 @@
                             <button type="button" id="add_btn" onclick="addWorkout({{alt_workouts}})">Add another</button>
                             </td>
                             <td>
-                            <button type="submit" id="edit_done_alt_workouts" class="btn btn-sm btn-primary">Done</button>
-                            </td>
+                            <div class="row">
+                                <button type="button" class="btn btn-success">
+                                    <a href="update_workouts"  style="color: rgb(255,255,255)">Done</a>
+                                </button>
+                                <!-- <button id="edit_done_alt_workouts" class="btn btn-sm btn-primary" type="button">Done</button> -->
+                            </div>
                             <script type="text/javascript">
                                 //hide button once clicked, so can only add one additional alt workout
                             var button = document.getElementById('add_btn')
@@ -119,28 +89,19 @@
                               time.setAttribute("name", "time_2");
                               time.setAttribute("placeholder", "mins");
                               document.getElementById("selects").appendChild(time);
-
                               
                             }
                             </script>
                         </tr>
                     </table>
-                </form> -->
+                </form>
+
+
                 </div>
             </div>    
         </div>
 
 
-        <div class="jumbotron">
-        <h2>Motivation</h2>
-        <table>
-
-           <tr>
-                <th>{{quote}}</th>
-           </tr>
-
-        </table>
-        </div>
 
         <footer class="footer">
             <p>&copy; O.K 2019</p>
