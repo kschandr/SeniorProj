@@ -36,6 +36,9 @@ def convertInchesToFeet(inches):
 	i = inches %12
 	return str(feet) + "'" + str(i)
 
+def convert_tokg(pounds):
+	return pounds*0.4535
+
 def calcTDEE(BMR, activity_level):
 	""" calculate TDEE based on BMR and activity level
 

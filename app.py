@@ -1,7 +1,7 @@
 import logging,sys,argparse, random, re
 import myfitnesspal,pexpect
 import datetime,calendar
-from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup
+from flask import Flask, render_template,json,request, redirect, url_for, flash, Markup,jsonify
 from flaskext.mysql import MySQL
 from werkzeug import generate_password_hash, check_password_hash
 from helper import *
@@ -278,6 +278,16 @@ def showNutrition():
 	_workout_cal = run_SP(user, day, s_proc="sp_getWorkout")[0][2]
 	app.logger.info("cals")
 	app.logger.info(_workout_cal)
+	met_dict = {"bike":7.0, "run":12.9, "walk":3.2}
+	weight = run_SP(user, s_proc="sp_getProfile")[0][0]
+	alt1 = run_SP(user, today, s_proc='sp_getAltWorkouts1')
+	app.logger.info(alt1)
+	alt1 = 0 if not alt1 else (met_dict[alt1[0][0]] * float(alt1[0][1]))
+	alt2 = run_SP(user, today, s_proc='sp_getAltWorkouts2')
+	app.logger.info(alt2)
+	alt2 = 0 if not alt2 else (met_dict[alt2[0][0]] * 20)
+
+	_workout_cal += alt1+alt2
 	_net_cal = cals - _workout_cal
 	return render_template('nutrition.html', cal=cals, workout_done = _workout_done, workout_cal= _workout_cal, \
 		net_cal= _net_cal, protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings, meal))
@@ -416,7 +426,7 @@ def showWorkout():
 		alt_info = alt_info + data2[0][0] + ", " + data2[0][1] + "mins"
 
 	return render_template('workout.html', quote=quote, workout=workout,
-				muscle_group=muscle_group, workout_done=workout_done, 
+				muscle_group=muscle_group, workout_done=workout_done,
 				alternate_chosen=alt_chosen, alternate=alt_info)
 
 @app.route('/workoutDone')
@@ -431,11 +441,22 @@ def workoutDone():
 
 	return render_template('workout.html', workoutDone=True)
 
-@app.route("/update_workouts")
+# @app.route("/postmethod", methods=["POST"])
+# def postmethod():
+# 	j =request.form["alt2"]
+# 	app.logger.info(j)
+# 	return j
+
+@app.route("/update_workouts", methods=['GET','POST'])
 @login_required
 def udpateWorkout():
+	_user = request.cookies.get("current_user")
+	app.logger.info("in update workout")
 	_w1 = request.form['alt_workout1']
+	app.logger.info("i have w1 %s",_w1)
+	#_w2= ""
 	_w2 = request.form['alt_workout2']
+	# app.logger.info("i have w2 %s",_w2)
 	_t1 = request.form['time_1']
 	_t2 = request.form['time_2']
 
@@ -446,7 +467,7 @@ def udpateWorkout():
 		except IndexError:
 			_w2 = ""
 			_t2 = ""
-
+	_t2=20
 	run_SP(_user,today,_w1,_t1,_w2,_w2, s_proc="sp_setAltWorkouts")
 	return redirect("workout")
 
