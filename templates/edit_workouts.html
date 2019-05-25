@@ -7,6 +7,8 @@
 
     <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
     <link href="../static/signup.css" rel="stylesheet">
+    <script src="../static/js/jquery-3.1.0.min.js"></script>
+    <!-- <script src="../static/js/edit_done_alt_workouts.js"></script> -->
 
 </head>
 
@@ -43,7 +45,7 @@
                     <table id='alternates'>
                         <tr>
                             <th>Select:</th>
-                            <td id="selects"> 
+                            <td id="selects">
                                 <select name= "alt_workout1">
                                 {% for w in alt_workouts %}
                                 <option value= "{{w}}" SELECTED>{{w}}</option>"
@@ -57,19 +59,36 @@
                             <button type="button" id="add_btn" onclick="addWorkout({{alt_workouts}})">Add another</button>
                             </td>
                             <td>
-                            <div class="row">
-                                <button type="button" class="btn btn-success">
-                                    <a href="update_workouts"  style="color: rgb(255,255,255)">Done</a>
+                            <div class="col-md-6 col-lg-6">
+                                <script>$(function() {
+                                    $('#edit_done_alt_workouts').click(function() {
+
+                                        $.ajax({
+                                            url: '/update_workouts',
+                                            data: $('form').serialize(),
+                                            type: 'POST',
+                                            success: function(response) {
+                                                //console.log(response);
+                                                window.location.href = "workout"
+                                            },
+                                            error: function(error) {
+                                                console.log(error);
+                                            }
+                                        });
+                                    });
+                                });</script>
+                                <button id="edit_done_alt_workouts" type="button" class="btn btn-success">Done
+                                    <!-- <a href="update_workouts"  style="color: rgb(255,255,255)">Done</a> -->
                                 </button>
                                 <!-- <button id="edit_done_alt_workouts" class="btn btn-sm btn-primary" type="button">Done</button> -->
                             </div>
-                            <script type="text/javascript">
+                            <script type="text/javascript" >
                                 //hide button once clicked, so can only add one additional alt workout
                             var button = document.getElementById('add_btn')
                             button.addEventListener('click',hideshow,false);
                             function hideshow() {
                                 this.style.display = 'none'
-                            }   
+                            }
                             </script>
                             <script>
                             function addWorkout(alt_workouts) {
@@ -78,25 +97,34 @@
                               select.setAttribute("name", "alt_workout2");
 
                               document.getElementById("selects").appendChild(select);
-
                               var arrayLength = alt_workouts.length;
+
                               for (var i = 0; i < arrayLength; i++) {
                                 var z = document.createElement("option");
                                 z.setAttribute("value", alt_workouts[i]);
+
                                 var t = document.createTextNode(alt_workouts[i]);
                                 z.appendChild(t);
                                 document.getElementById("alt_workout2").appendChild(z);
+                                console.log(z)
                                }
+
 
                               var time = document.createElement("INPUT");
                               time.setAttribute("name", "time_2");
                               time.setAttribute("placeholder", "mins");
                               document.getElementById("selects").appendChild(time);
-                              
+                              // $.post( "/postmethod", {
+                              //     alt2: JSON.stringify(time)
+                              //   }, function(err, req, resp){
+                              //     window.location.href = "workout"
+                              //   });
+
                             }
                             </script>
                             
                         </td>
+
                         </tr>
                     </table>
                 </div>
@@ -104,7 +132,7 @@
 
 
                 </div>
-            </div>    
+            </div>
         </div>
 
 
@@ -114,7 +142,6 @@
         </footer>
 
     </div>
-</form>
 </body>
 
 </html>
