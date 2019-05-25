@@ -420,10 +420,10 @@ def showWorkout():
 	data2 = run_SP(user, today, s_proc='sp_getAltWorkouts2')
 	if data1:
 		alt_chosen=True
-		alt_info = data1[0][0] + ", " + data1[0][1] + "mins"
+		alt_info = data1[0][0] + ": " + data1[0][1] + " mins\n"
 
 	if data2:
-		alt_info = alt_info + data2[0][0] + ", " + data2[0][1] + "mins"
+		alt_info = alt_info + ", " + data2[0][0] + ": " + data2[0][1] + " mins"
 
 	return render_template('workout.html', quote=quote, workout=workout,
 				muscle_group=muscle_group, workout_done=workout_done,
@@ -468,7 +468,7 @@ def udpateWorkout():
 			_w2 = ""
 			_t2 = ""
 	_t2=20
-	run_SP(_user,today,_w1,_t1,_w2,_w2, s_proc="sp_setAltWorkouts")
+	run_SP(_user,today,_w1,_t1,_w2,_t2, s_proc="sp_setAltWorkouts")
 	return redirect("workout")
 
 
