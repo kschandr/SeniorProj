@@ -39,6 +39,7 @@
                 <div class="col-md-6 col-lg-6">
                     <h2>Alternate Workouts</h2>
                     <form class="form-update">
+                        <div class="row">
                     <table id='alternates'>
                         <tr>
                             <th>Select:</th>
@@ -50,6 +51,8 @@
                                 </select>
                                 <input name="time_1" placeholder="mins">
                             </td>
+                        </tr>
+                        <tr>
                             <td>
                             <button type="button" id="add_btn" onclick="addWorkout({{alt_workouts}})">Add another</button>
                             </td>
@@ -92,8 +95,11 @@
                               
                             }
                             </script>
+                            
+                        </td>
                         </tr>
                     </table>
+                </div>
                 </form>
 
 

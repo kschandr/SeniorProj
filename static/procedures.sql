@@ -36,6 +36,24 @@ select type2,time2 from alt_workouts where user=p_username and date=p_date;
 END $$
 delimiter ;
 
+ALTER TABLE tbl_goals ADD COLUMN goal_1 VARCHAR(30);
+ALTER TABLE tbl_goals ADD COLUMN goal_2 VARCHAR(30);
+ALTER TABLE tbl_goals ADD COLUMN goal_3 VARCHAR(30);
+ALTER TABLE tbl_goals ADD COLUMN goal_4 VARCHAR(30);
+ALTER TABLE tbl_goals ADD COLUMN goal_5 VARCHAR(30);
+
+update tbl_goals set goal_1='',goal_2='',goal_3='',goal_4='',goal_5='';
+
+drop procedure if exists sp_getIndGoals;
+delimiter $$
+CREATE PROCEDURE sp_getIndGoals (
+  in p_username varchar(45)
+)
+BEGIN
+select goal_1, goal_2, goal_3, goal_4, goal_5
+from tbl_goals where username=p_username;
+END $$
+delimiter ;
 
 drop procedure if exists sp_setAltWorkouts;
 delimiter $$
@@ -408,12 +426,17 @@ weight: str, weight goal (maintain, lose or gain)
 */
 drop procedure if exists sp_editGoals; 
 delimiter $$
-CREATE PROCEDURE `sp_editGoals`(
-	in p_username varchar(45),
-	in bool_list varchar(10),
+CREATE PROCEDURE sp_editGoals (
+  in p_username varchar(45),
+  in bool_list varchar(10),
     in weight_diff varchar(45),
     in weight_goal int,
-    in cals int
+    in cals int,
+    in ind_1 varchar(30),
+    in ind_2 varchar(30),
+    in ind_3 varchar(30),
+    in ind_4 varchar(30),
+    in ind_5 varchar(30)
 )
 BEGIN
 declare run boolean default 0;
@@ -422,10 +445,11 @@ set run = if(find_in_set('2',bool_list) <> 0, 1,0);
 set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
 
 UPDATE tbl_goals set 
-lift=weights,run_5k=run,weight_goal=weight_diff,goal_lbs=weight_goal, goal_cals=cals
+lift=weights,run_5k=run,weight_goal=weight_diff,goal_lbs=weight_goal, goal_cals=cals, 
+goal_1=ind_1, goal_2=ind_2, goal_3=ind_3, goal_4=ind_4, goal_5=ind_5
 where username=p_username;
 END $$
-delimiter; 
+delimiter ;
 
 /***sp_getGoals.
 get goals for the user

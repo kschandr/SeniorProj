@@ -82,20 +82,38 @@
                       {%if run_bool %}
                         <tr>
                             <td>Best 5k Time</td>
-                            <td>data</td>
+                            <td>N/A</td>
                         </tr>
                       {% endif %}
                       {%if lift_bool %}
                         <tr>
                                 <td>Bench PR</td>
-                                <td>data</td>
+                                <td>155 lbs</td>
                         </tr><tr>
                                 <td>Squat PR</td>
-                                <td>data</td>
+                                <td>165 lbs</td>
                         </tr><tr>
                                 <td>Deadlift PR</td>
-                                <td>data</td>
+                                <td>180 lbs</td>
                         </tr>
+                      {% endif %}
+                    </table>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <table id="results">
+                        <tr>
+                            <th>Individual Goals</th>
+                        </tr>
+                      {%if manual_goals %}
+                            {% for w in ind_goals %}
+                                <tr><td>{{w[0]}}: {{w[1]}}</td></tr>
+                            {% endfor %}
+
+                      {% else %}
+                        <tr>
+                            <td>N/A</td>
+                        </tr>
+
                       {% endif %}
                     </table>
                 </div>

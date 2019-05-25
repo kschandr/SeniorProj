@@ -523,11 +523,21 @@ def showGoals():
 	except IndexError:
 		cur_cals = 0
 
+	manual=False
+	goals = run_SP(user, s_proc='sp_getIndGoals')[0]
+	i = 1
+	ind_goals = []
+	for x in goals:
+		ind_goals.append([i, x])
+		if x != '':
+			manual=True
+		i = i + 1
 
 
 
 	return render_template('goals.html', quote=quote, lift_bool=lift_bool, run_bool=run_bool, weight_goal=weight_diff, \
-		goal_lbs=weight_goal, cur_weight=cur_weight, goal_cals=cal_goal, today_cals=cur_cals)
+		goal_lbs=weight_goal, cur_weight=cur_weight, goal_cals=cal_goal, today_cals=cur_cals, manual_goals=manual, \
+		ind_goals = ind_goals)
 
 @app.route("/update_goals",methods=['POST'])
 @login_required
@@ -546,7 +556,19 @@ def updateGoals():
 	_weight_goal = request.form['goal_weight']
 	_cal_goal = request.form['cal_goal']
 
+	_ind_goals = []
+	_ind_goals.append(request.form['ind_goal_1'])
+	_ind_goals.append(request.form['ind_goal_2'])
+	_ind_goals.append(request.form['ind_goal_3'])
+	_ind_goals.append(request.form['ind_goal_4'])
+	_ind_goals.append(request.form['ind_goal_5'])
 
+	for i in range(5):
+		if _ind_goals[i] == '':
+			try:
+				_ind_goals[i] = run_SP(_user, s_proc='sp_getIndGoals')[0][i]
+			except IndexError:
+				_ind_goals[i] = 0
 
 	if not _weight_goal:
 		try:
@@ -560,14 +582,21 @@ def updateGoals():
 		except IndexError:
 			_cal_goal = 0
 
-	run_SP(_user,_pr,_weight_diff, _weight_goal, _cal_goal, s_proc="sp_editGoals")
+	run_SP(_user,_pr,_weight_diff, _weight_goal, _cal_goal, _ind_goals[0], _ind_goals[1], _ind_goals[2], _ind_goals[3], _ind_goals[4], s_proc="sp_editGoals")
 	return render_template('goals.html')
 
 @app.route("/edit_goals")
 @login_required
 def editGoals():
+	_user = request.cookies.get("current_user")
 	weights = ["Lose", "Maintain", "Gain"]
-	return render_template("edit_goals.html", weights = weights)
+	goals = run_SP(_user, s_proc='sp_getIndGoals')[0]
+	i = 1
+	ind_goals = []
+	for x in goals:
+		ind_goals.append([i, x])
+		i = i + 1
+	return render_template("edit_goals.html", weights = weights, ind_goals = ind_goals)
 
 
 
