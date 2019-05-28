@@ -273,6 +273,14 @@ def showNutrition():
 	except IndexError:
 		_workout_done = False
 
+	goal_cal = run_SP(user, s_proc="sp_getGoals")
+	app.logger.info(goal_cal)
+	if not goal_cal or (goal_cal and not goal_cal[0][-1]):
+		flash("Please update your nutrition goals in the goals tab")
+		return render_template('goals.html')
+	else:
+		goal_cal= goal_cal[0][-1]
+	app.logger.info(goal_cal)
 	my_date = date.today()
 	day = calendar.day_name[my_date.weekday()]
 	_workout_cal = run_SP(user, day, s_proc="sp_getWorkout")[0][2]
@@ -289,6 +297,9 @@ def showNutrition():
 
 	_workout_cal += alt1+alt2
 	_net_cal = cals - _workout_cal
+	if _net_cal > goal_cal:
+		message = "You have surpassed your goal caloric intake of " + str(goal_cal)
+		flash(message)
 	return render_template('nutrition.html', cal=cals, workout_done = _workout_done, workout_cal= _workout_cal, \
 		net_cal= _net_cal, protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings, meal))
 
@@ -321,7 +332,7 @@ def searchResults(search):
 		else:
 				# display results
 				#app.logger.info("results: \n%s", res)
-				food_items = res[:10]
+				food_items = res[:10] if len(res) >9 else res
 				app.logger.info("food_items: %s" , food_items)
 				data = [client.get_food_item_details(i.mfp_id) for i in res[:10]]
 				food_data = zip(food_items,data)
@@ -545,14 +556,16 @@ def showGoals():
 		cur_cals = 0
 
 	manual=False
-	goals = run_SP(user, s_proc='sp_getIndGoals')[0]
+	goals = run_SP(user, s_proc='sp_getIndGoals')
+	goals = goals[0] if goals else []
 	i = 1
 	ind_goals = []
-	for x in goals:
-		ind_goals.append([i, x])
-		if x != '':
-			manual=True
-		i = i + 1
+	if goals:
+		for x in goals:
+			ind_goals.append([i, x])
+			if x != '':
+				manual=True
+			i = i + 1
 
 
 
@@ -609,9 +622,10 @@ def updateGoals():
 @app.route("/edit_goals")
 @login_required
 def editGoals():
-	_user = request.cookies.get("current_user")
+	user = request.cookies.get("current_user")
 	weights = ["Lose", "Maintain", "Gain"]
-	goals = run_SP(_user, s_proc='sp_getIndGoals')[0]
+	goals = run_SP(user, s_proc='sp_getIndGoals')
+	goals = goals[0] if goals else []
 	i = 1
 	ind_goals = []
 	for x in goals:
