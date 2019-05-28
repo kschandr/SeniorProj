@@ -3,17 +3,13 @@
 
 <head>
     <title>Python Flask App</title>
-
-
     <link href="https://bootswatch.com/4/cerulean/bootstrap.min.css" rel="stylesheet">
     <link href="../static/signup.css" rel="stylesheet">
     <script src="../static/js/jquery-3.1.0.min.js"></script>
     <script src="../static/js/addFood.js"></script>
-
 </head>
 
 <body>
-
     <div class="container">
         <div class="header">
             <nav>
@@ -36,42 +32,39 @@
             </nav>
             <h1>Food Database</h1>
         </div>
-
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-
-    <div class="jumbotron">
-        <div class="row">
-        <div class="col-md-6 col-lg-6">
-    		{% macro render_field(field) %}
-    		    <dt>{{ field.label }}
-    		    <dd>{{ field(**kwargs)|safe }}
-    		    {% if field.errors %}
-    		        <ul class=errors>
-    		        {% for error in field.errors %}
-    		            <li>{{ error }}</li>
-    		        {% endfor %}
-    		        </ul>
-    		    {% endif %}
-    		    </dd>
-    		{% endmacro %}
-	    <form method=post>
-			  <dl>
-			    {{ render_field(form.search) }}
-			  </dl>
-			  <p><input type=submit value=Search>
-		</form>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul class=flashes>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        <div class="jumbotron">
+            <div class="row">
+                <div class="col-md-6 col-lg-6">
+                    {% macro render_field(field) %}
+                    <dt>{{ field.label }}
+                    <dd>{{ field(**kwargs)|safe }}
+                        {% if field.errors %}
+                        <ul class=errors>
+                            {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </dd>
+                    {% endmacro %}
+                    <form method=post class="form-inline my-2 my-lg-0">
+                        <dl>
+                            {{ render_field(form.search) }}
+                        </dl>
+                        <p><input class="btn btn-secondary my-2 my-sm-0" type=submit value=Search>
+                    </form>
+                </div>
+            </div>
         </div>
-
-     </div>
-    </div>
         <div class="jumbotron">
             <form class="form-update">
                 <table id="results">
@@ -82,34 +75,31 @@
                         <th> Serving Size </th>
                     </tr>
                     {% for r,d in res %}
-                        <tr>
-                            <td class="cellinfo"> {{r.name}} | {{r.brand}}
-                                <span class="info">
-                                    protein: {{d.protein}} g, fat: {{d.fat}} g, carbs: {{d.carbohydrates}} g
-                                </span>
-                            </td>
-                            <td>  {{r.calories}} </td>
-                            <td><input type="number" name="serving_size"/>
-                                <input type="hidden" name="food_id" value="{{r.mfp_id}}"/></td>>
-                        </tr>
-                        <!-- <p><p> -->
+                    <tr>
+                        <td class="cellinfo"> {{r.name}} | {{r.brand}}
+                            <span class="info">
+                                protein: {{d.protein}} g, fat: {{d.fat}} g, carbs: {{d.carbohydrates}} g
+                            </span>
+                        </td>
+                        <td> {{r.calories}} </td>
+                        <td><input type="number" name="serving_size" />
+                            <input type="hidden" name="food_id" value="{{r.mfp_id}}" /></td>>
+                    </tr>
+                    <!-- <p><p> -->
                     {% endfor %}
                 </table>
-                <select name="meal_selected" class="custom-select" >
-                  <option value="" SELECTED>Choose Meal</option>
-                  <option value="Breakfast">Breakfast</option>
-                  <option value="Lunch">Lunch</option>
-                  <option value="Dinner">Dinner</option>
+                <select name="meal_selected" class="custom-select">
+                    <option value="" SELECTED>Choose Meal</option>
+                    <option value="Breakfast">Breakfast</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Dinner">Dinner</option>
                 </select>
-
                 <button id="addFood" class="btn btn-sm btn-primary" type="button">Add</button>
             </form>
         </div>
-
         <footer class="footer">
             <p>&copy; O.K 2019</p>
         </footer>
-
     </div>
 </body>
 
