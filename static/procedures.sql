@@ -14,62 +14,6 @@ time2 varchar(10) not null,
 date DATE not null,
 primary key (user, date, type1, type2));
 
-drop procedure if exists sp_getAltWorkouts1;
-delimiter $$
-create procedure sp_getAltWorkouts1 (
-in p_username varchar(45),
-in p_date DATE
-)
-begin
-select type1,time1 from alt_workouts where user=p_username and date=p_date;
-END $$
-delimiter ;
-
-drop procedure if exists sp_getAltWorkouts2;
-delimiter $$
-create procedure sp_getAltWorkouts2 (
-in p_username varchar(45),
-in p_date DATE
-)
-begin
-select type2,time2 from alt_workouts where user=p_username and date=p_date;
-END $$
-delimiter ;
-
-ALTER TABLE tbl_goals ADD COLUMN goal_1 VARCHAR(30);
-ALTER TABLE tbl_goals ADD COLUMN goal_2 VARCHAR(30);
-ALTER TABLE tbl_goals ADD COLUMN goal_3 VARCHAR(30);
-ALTER TABLE tbl_goals ADD COLUMN goal_4 VARCHAR(30);
-ALTER TABLE tbl_goals ADD COLUMN goal_5 VARCHAR(30);
-
-update tbl_goals set goal_1='',goal_2='',goal_3='',goal_4='',goal_5='';
-
-drop procedure if exists sp_getIndGoals;
-delimiter $$
-CREATE PROCEDURE sp_getIndGoals (
-  in p_username varchar(45)
-)
-BEGIN
-select goal_1, goal_2, goal_3, goal_4, goal_5
-from tbl_goals where username=p_username;
-END $$
-delimiter ;
-
-drop procedure if exists sp_setAltWorkouts;
-delimiter $$
-create procedure sp_setAltWorkouts (
-in p_username varchar(45),
-in p_date DATE,
-in p_type1 varchar(15),
-in p_time1 varchar(10),
-in p_type2 varchar(15),
-in p_time2 varchar(10)
-)
-begin
-insert into alt_workouts (user, date, type1, time1, type2, time2) 
-values (p_username, p_date, p_type1, p_time1, p_type2, p_time2);
-END $$
-delimiter ;
 
 
 
@@ -114,6 +58,11 @@ CREATE TABLE `tbl_goals` (
   `weight_goal` varchar(45) DEFAULT 'Maintain',
   `goal_lbs` int(11) DEFAULT '100',
   `goal_cals` int(11) DEFAULT '1200',
+  `goal_1` varchar(30) DEFAULT NULL,
+  `goal_2` varchar(30) DEFAULT NULL,
+  `goal_4` varchar(30) DEFAULT NULL,
+  `goal_3` varchar(30) DEFAULT NULL,
+  `goal_5` varchar(30) DEFAULT NULL,
   KEY `tbl_goals` (`username`),
   CONSTRAINT `tbl_goals_ibfk_1` FOREIGN KEY (`username`) REFERENCES `tbl_user` (`user_username`)
 );
@@ -361,10 +310,10 @@ CREATE PROCEDURE `sp_getWorkout`(
 BEGIN
   select workout, muscle_group, cals from exercises 
   where id 
-  IN (select id from plans 
+  IN (select max(id) from plans 
 	  where day = _day and goal IN ((
 			select weight_goal from tbl_goals 
-				where username=_username), "Maintain"));
+				where username=_username limit 1), "Maintain"));
 END$$
 DELIMITER ;
 
@@ -642,4 +591,67 @@ BEGIN
   pounds = _weight;
 END $$
 delimiter ;
+
+drop procedure if exists sp_getAltWorkouts1;
+delimiter $$
+create procedure sp_getAltWorkouts1 (
+in p_username varchar(45),
+in p_date DATE
+)
+begin
+select type1,time1 from alt_workouts where user=p_username and date=p_date;
+END $$
+delimiter ;
+
+drop procedure if exists sp_getAltWorkouts2;
+delimiter $$
+create procedure sp_getAltWorkouts2 (
+in p_username varchar(45),
+in p_date DATE
+)
+begin
+select type2,time2 from alt_workouts where user=p_username and date=p_date;
+END $$
+delimiter ;
+
+
+drop procedure if exists sp_getIndGoals;
+delimiter $$
+CREATE PROCEDURE sp_getIndGoals (
+  in p_username varchar(45)
+)
+BEGIN
+select goal_1, goal_2, goal_3, goal_4, goal_5
+from tbl_goals where username=p_username;
+END $$
+delimiter ;
+
+drop procedure if exists sp_setAltWorkouts;
+delimiter $$
+create procedure sp_setAltWorkouts (
+in p_username varchar(45),
+in p_date DATE,
+in p_type1 varchar(15),
+in p_time1 varchar(10),
+in p_type2 varchar(15),
+in p_time2 varchar(10)
+)
+begin
+insert into alt_workouts (user, date, type1, time1, type2, time2) 
+values (p_username, p_date, p_type1, p_time1, p_type2, p_time2);
+END $$
+delimiter ;
+
+DELIMITER $$
+CREATE TRIGGER after_insert_user
+    after insert ON tbl_user
+    FOR EACH ROW 
+BEGIN
+    INSERT INTO tbl_profile
+    (username) values (NEW.user_username);
+    
+    insert into tbl_goals
+    (username) values (NEW.user_username);
+END$$
+DELIMITER ;
 
