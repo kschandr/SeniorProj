@@ -39,15 +39,16 @@
                 <div class="col-md-6 col-lg-6">
                     {% if not workout_done %}
                     <h2>Today's Workout</h2>
-                    <table>
+                    <h4>{{muscle_group}} Exercise</h4>
+                    <table id="results">
                        <tr>
-                            <th>{{muscle_group}} Exercise</th>
+                            <pre style="text-align: left"><code>{% for w in workout.split("\r\n") %}<tr><td>{{w}}<br></td></tr>{% endfor %}</code></pre>
                        </tr>
-                       <tr>
-                            <td><pre>{{workout}}</pre></td>
-                       </tr>
-                       <tr> <a href="workoutDone">Done!</a> </tr>
                     </table>
+                    <br>
+                    <button type="button" class="btn btn-success">
+                            <a href="workoutDone" style="color: rgb(255,255,255)">Done!</a> 
+                        </button>
                     {% else %}
                     <h2>Congratulations!</h2>
                     <table>
@@ -72,60 +73,6 @@
                         </button>
                     </div>
                     {% endif %}
-                    <!-- <form class="form-update">
-                    <table id='alternates'>
-                        <tr>
-                            <th>Select:</th>
-                            <td id="selects"> 
-                                <select name= "alt_workout1">
-                                {% for w in alt_workouts %}
-                                <option value= "{{w}}" SELECTED>{{w}}</option>"
-                                {% endfor %}
-                                </select>
-                                <input name="time_1" placeholder="mins">
-                            </td>
-                            <td>
-                            <button type="button" id="add_btn" onclick="addWorkout({{alt_workouts}})">Add another</button>
-                            </td>
-                            <td>
-                            <button type="submit" id="edit_done_alt_workouts" class="btn btn-sm btn-primary">Done</button>
-                            </td>
-                            <script type="text/javascript">
-                                //hide button once clicked, so can only add one additional alt workout
-                            var button = document.getElementById('add_btn')
-                            button.addEventListener('click',hideshow,false);
-                            function hideshow() {
-                                this.style.display = 'none'
-                            }   
-                            </script>
-                            <script>
-                            function addWorkout(alt_workouts) {
-                              var select = document.createElement("SELECT");
-                              select.setAttribute("id", "alt_workout2");
-                              select.setAttribute("name", "alt_workout2");
-
-                              document.getElementById("selects").appendChild(select);
-
-                              var arrayLength = alt_workouts.length;
-                              for (var i = 0; i < arrayLength; i++) {
-                                var z = document.createElement("option");
-                                z.setAttribute("value", alt_workouts[i]);
-                                var t = document.createTextNode(alt_workouts[i]);
-                                z.appendChild(t);
-                                document.getElementById("alt_workout2").appendChild(z);
-                               }
-
-                              var time = document.createElement("INPUT");
-                              time.setAttribute("name", "time_2");
-                              time.setAttribute("placeholder", "mins");
-                              document.getElementById("selects").appendChild(time);
-
-                              
-                            }
-                            </script>
-                        </tr>
-                    </table>
-                </form> -->
                 </div>
             </div>    
         </div>
