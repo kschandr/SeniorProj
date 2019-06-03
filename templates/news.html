@@ -35,33 +35,71 @@
             <h1>News</h1>
         </div>
 
+<script>
+    function showMoreLess(x) {
+  var x = document.getElementById(x);
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
+}
+</script>
 
-    <div class="jumbotron">
+
+    <div class="row">
+    <div class="col-md-6 col-lg-6">
+        <div class="jumbotron">
         <h2>{{art1[0][0]}}</h2>
         <table>
 
            <tr>
                 <th>By: {{art1[0][1]}}</th>
            </tr>
-           <tr><td>{{art1[0][2]|safe}}</td></tr>
+           <tr><td>
+            {% for i in range(0, 150) %}
+           {{(art1[0][2]|safe).split(" ")[i]}}
+            {% endfor %}
+            <button onclick="showMoreLess('moreArt1')">Read More/Less</button>
+                <div style="display:none" id="moreArt1">
+                  {% for j in range(150,5000) %}
+                   {{(art1[0][2]|safe).split(" ")[j]}}
+                    {% endfor %}
+                </div>
+        </td></tr>
 
 
         </table>
     </div>
+    </div>
 
-    <div class="jumbotron">
+    <div class="col-md-6 col-lg-6">
+        <div class="jumbotron">
         <h2>{{art2[0][0]}}</h2>
         <table>
 
            <tr>
                 <th>By: {{art2[0][1]}}</th>
            </tr>
-           <tr><td>{{art2[0][2]|safe}}</td></tr>
+           <tr><td>
+            {% for i in range(0, 150) %}
+           {{(art2[0][2]|safe).split(" ")[i]}}
+            {% endfor %}
+            <button onclick="showMoreLess('moreArt2')">Read More/Less</button>
+                <div style="display:none" id="moreArt2">
+                  {% for j in range(150,5000) %}
+                   {{(art2[0][2]|safe).split(" ")[j]}}
+                    {% endfor %}
+                </div>
+            </td></tr>
 
 
         </table>
     </div>
-
+</div>
+</div>
+<div class="row">
+    <div class="col-md-6 col-lg-6">
     <div class="jumbotron">
         <h2>{{art3[0][0]}}</h2>
         <table>
@@ -69,12 +107,47 @@
            <tr>
                 <th>By: {{art3[0][1]}}</th>
            </tr>
-           <tr><td>{{art3[0][2]|safe}}</td></tr>
+           <tr><td>
+            {% for i in range(0, 150) %}
+           {{(art3[0][2]|safe).split(" ")[i]}}
+            {% endfor %}
+            <button onclick="showMoreLess('moreArt3')">Read More/Less</button>
+                <div style="display:none" id="moreArt3">
+                  {% for j in range(150,5000) %}
+                   {{(art3[0][2]|safe).split(" ")[j]}}
+                    {% endfor %}
+                </div>
+            </td></tr>
 
 
         </table>
     </div>
+    </div>
 
+    <div class="col-md-6 col-lg-6">
+    <div class="jumbotron">
+        <h2>{{art4[0][0]}}</h2>
+        <table>
+
+           <tr>
+                <th>By: {{art4[0][1]}}</th>
+           </tr>
+           <tr><td>
+            {% for i in range(0, 150) %}
+           {{(art4[0][2]|safe).split(" ")[i]}}
+            {% endfor %}
+            <button onclick="showMoreLess('moreArt4')">Read More/Less</button>
+                <div style="display:none" id="moreArt4">
+                  {% for j in range(150,5000) %}
+                   {{(art4[0][2]|safe).split(" ")[j]}}
+                    {% endfor %}
+                </div>
+            </td></tr>
+
+        </table>
+    </div>
+</div>
+</div>
 
         <footer class="footer">
             <p>&copy; O.K 2019</p>

@@ -419,6 +419,7 @@ def showWorkout():
 		done = data[0][0]
 		if done == "done":
 			workout_done = True
+			workout = ""
 		else:
 			workout_done = False
 		#super janky try/except block... should change
@@ -507,12 +508,13 @@ def showNews():
 	"""
 	user = request.cookies.get("current_user")
 	# 8 is the length of the motivation table
-	ids = random.sample(list(range(1,9)), 3)
+	ids = random.sample(list(range(1,9)), 4)
 
 	art1 = run_SP(ids[0], s_proc='sp_getArticle')
 	art2 = run_SP(ids[1], s_proc='sp_getArticle')
 	art3 = run_SP(ids[2], s_proc='sp_getArticle')
-	return render_template('news.html', art1=art1, art2=art2, art3=art3)
+	art4 = run_SP(ids[3], s_proc='sp_getArticle')
+	return render_template('news.html', art1=art1, art2=art2, art3=art3, art4=art4)
 
 
 
