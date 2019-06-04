@@ -300,8 +300,8 @@ def showNutrition():
 	if _net_cal > goal_cal:
 		message = "You have surpassed your goal caloric intake of " + str(goal_cal)
 		flash(message)
-	return render_template('nutrition.html', cal=cals, workout_done = _workout_done, workout_cal= _workout_cal, \
-		net_cal= _net_cal, protein=protein, fat=fat,carbs=carb, food_ids=zip(food_data,servings, meal))
+	return render_template('nutrition.html', cal=cals,goal_cal=goal_cal, workout_done = _workout_done, workout_cal= _workout_cal, \
+		net_cal= _net_cal, protein=protein, fat=fat,carbs=carb,goal_pro=.3*goal_cal, goal_carb=.4*goal_cal, goal_fat=.3*goal_cal, food_ids=zip(food_data,servings, meal))
 
 	#return render_template('nutrition.html')
 
