@@ -57,39 +57,50 @@
         </div>
 
         <div class="jumbotron">
-            <h2>Add Food</h2><a href="searchFood">Search</a>
+            <h2>Add Food</h2>
+            <p class="lead">Update your food diary with our extensive database. Search below!</p>
+            <button type="button" class="btn btn-info"><a href="searchFood">Search</a></button>
         </div>
 
-        <h2>What You Ate Today</h2>
+
         <div class="jumbotron">
+            <h2>What You Ate Today</h2>
+            <hr class="my-4">
             <div class="row">
                 <!-- so columns # have to add up to 12. md/lg specifies the screensize -->
                 <!-- source: https://www.w3schools.com/bootstrap/bootstrap_grid_system.asp -->
                 <div class="col-md-6 col-lg-6">
-                    <table>
-                       <tr>
-                            <th><pre>Calories</pre></th>
-                            <td><pre>{{cal}} cal</pre></td>
-                            {% if workout_done %}
-                            <td><pre> - {{workout_cal}} cal (exercise)</pre></td>
-                            <td><pre> = {{net_cal}} cal</pre></td>
-                            {% endif %}
-                       </tr>
-                       <tr>
-                            <th><pre>Carbohydrates</pre></th>
-                            <td><pre>{{carbs}} g</pre></td>
-                       </tr>
-                       <tr>
-                            <th><pre>Protein</pre></th>
-                            <td><pre>{{protein}} g</pre></td>
-                       </tr>
-
-                       <tr>
-                            <th><pre>Fat</pre></th>
-                            <td><pre>{{fat}} g </pre></td>
-                       </tr>
-
-                    </table>
+                    <table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col"></th>
+      <th scope="col">Totals</th>
+      <th scope="col">Daily Goal</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+        <th scope="row">Calories (kcal)</th>
+        <td>{{cal}}</td>
+        <td>{{goal_cal}}</td>
+    </tr>
+     <tr>
+        <th scope="row">Protein (g)</th>
+        <td>{{protein}}</td>
+        <td>{{goal_pro}}</td>
+    </tr>
+     <tr>
+         <th scope="row">Fat (g)</th>
+        <td>{{fat}}</td>
+        <td>{{goal_fat}}</td>
+    </tr>
+     <tr>
+         <th scope="row">Carbohydrates (g)</th>
+        <td>{{carbs}}</td>
+        <td>{{goal_carb}}</td>
+    </tr>
+</tbody>
+</table>
                 </div>
 
                 <div class="col-md-6 col-lg-6">

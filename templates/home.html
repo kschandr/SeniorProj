@@ -72,11 +72,9 @@
         <div class="jumbotron">
             <h2>Graphs</h2>
             <hr class="my-4">
-            <div class="row top-buffer">
-                <h3>{{ g1_title }}</h3>
-            </div>
             <div class="row">
                 <div class="col-lg-8 col-md-8">
+                    <h3>{{ g1_title }}</h3>
                     {% if not calories==0 %}
                     <canvas id="chart1" width="600" height="400"></canvas>
                     <script>
@@ -89,16 +87,17 @@
                                       },
                                 {% endfor %}
                                 ];
-// get bar chart canvas
-var mychart = document.getElementById("chart1").getContext("2d");
-steps = 10
-max = {{ max }}
-// draw pie chart
-new Chart(document.getElementById("chart1").getContext("2d")).Pie(pieData);
-</script>
+                    // get bar chart canvas
+                    var mychart = document.getElementById("chart1").getContext("2d");
+                    steps = 10
+                    max = {{ max }}
+                    // draw pie chart
+                    new Chart(document.getElementById("chart1").getContext("2d")).Pie(pieData);
+                    </script>
                     {% else %}
                     No macro data for today
                     {% endif %}
+                    <br><br>
                 </div>
                 <div class="col-lg-4 col-md-4">
                     <button type="button" class="btn btn-outline-primary btn-sm"><a href="nutrition">Edit Calories</a></button>
@@ -110,6 +109,9 @@ new Chart(document.getElementById("chart1").getContext("2d")).Pie(pieData);
             </div>
             <div class="row">
                 <div class="col-lg-8 col-md-8">
+                  {% if not values %}
+                    No data yet.
+                    {% else %}
                     <canvas id="chart2" width="600" height="400"></canvas>
                     <script>
                         var barData = {
@@ -159,6 +161,7 @@ scaleShowLabels: true
 }
 );
 </script>
+{% endif %}
                 </div>
                 <div class="col-lg-4 col-md-4">
                     <button type="button" class="btn btn-outline-primary btn-sm"><a href="nutrition">Edit Calories</a></button>
@@ -177,71 +180,71 @@ scaleShowLabels: true
                     <script>
                         // bar chart data
 var barData = {
-labels : [
-
-{% for item in line_labels %}
-"{{ item }}",
-{% endfor %}
-],
-datasets : [{
-label: 'Goal Weight',
-fill : false,
-fillColor: "transparent",
-strokeColor: "rgba(0,0,0,1)",
-pointColor: "rgba(0,0,0,1)",
-data: [
-{% for item in line_values %}
-"{{ goal_weight }}",
-{% endfor %}
-]
-},{
-label : 'Weight Progress',
-fill : false,
-fillColor: "transparent",
-strokeColor: "rgba(151,187,205,1)",
-pointColor: "rgba(151,187,205,1)",
-// pointStrokeColor: "#fff",
-// pointHighlightFill: "#fff",
-// pointHighlightStroke: "rgba(151,187,205,1)",
-// bezierCurve : false,
-data : [
-{% for item in line_values %}
-"{{ item }}",
-{% endfor %}
-]
-}]
-}
-Chart.defaults.global.animationSteps = 50;
-Chart.defaults.global.tooltipYPadding = 16;
-Chart.defaults.global.tooltipCornerRadius = 0;
-Chart.defaults.global.tooltipTitleFontStyle = "normal";
-Chart.defaults.global.tooltipFillColor = "rgba(0,0,0,0.8)";
-Chart.defaults.global.animationEasing = "easeOutBounce";
-Chart.defaults.global.responsive = false;
-Chart.defaults.global.scaleLineColor = "black";
-Chart.defaults.global.scaleFontSize = 16;
-// get bar chart canvas
-var mychart = document.getElementById("chart3").getContext("2d");
-steps = 10
-max = {{ line_max }}
-// draw bar chart
-var LineChartDemo = new Chart(mychart).Line(barData, {
-scaleOverride: true,
-scaleSteps: steps,
-scaleStepWidth: Math.ceil(max / steps),
-scaleStartValue: 0,
-scaleShowVerticalLines: true,
-scaleShowGridLines : true,
-barShowStroke : true,
-scaleShowLabels: true,
-bezierCurve: false,
-});
-</script>
+                  labels : [
+                  {% for item in line_labels %}
+                  "{{ item }}",
+                  {% endfor %}
+                  ],
+                  datasets : [{
+                  label: 'Goal Weight',
+                  fill : false,
+                  fillColor: "transparent",
+                  strokeColor: "rgba(0,0,0,1)",
+                  pointColor: "rgba(0,0,0,1)",
+                  data: [
+                  {% for item in line_values %}
+                  "{{ goal_weight }}",
+                  {% endfor %}
+                  ]
+                  },{
+                  label : 'Weight Progress',
+                  fill : false,
+                  fillColor: "transparent",
+                  strokeColor: "rgba(151,187,205,1)",
+                  pointColor: "rgba(151,187,205,1)",
+                  // pointStrokeColor: "#fff",
+                  // pointHighlightFill: "#fff",
+                  // pointHighlightStroke: "rgba(151,187,205,1)",
+                  // bezierCurve : false,
+                  data : [
+                  {% for item in line_values %}
+                  "{{ item }}",
+                  {% endfor %}
+                  ]
+                  }]
+                  }
+                  Chart.defaults.global.animationSteps = 50;
+                  Chart.defaults.global.tooltipYPadding = 16;
+                  Chart.defaults.global.tooltipCornerRadius = 0;
+                  Chart.defaults.global.tooltipTitleFontStyle = "normal";
+                  Chart.defaults.global.tooltipFillColor = "rgba(0,0,0,0.8)";
+                  Chart.defaults.global.animationEasing = "easeOutBounce";
+                  Chart.defaults.global.responsive = false;
+                  Chart.defaults.global.scaleLineColor = "black";
+                  Chart.defaults.global.scaleFontSize = 16;
+                  // get bar chart canvas
+                  var mychart = document.getElementById("chart3").getContext("2d");
+                  steps = 10
+                  max = {{ line_max }}
+                  // draw bar chart
+                  var LineChartDemo = new Chart(mychart).Line(barData, {
+                  scaleOverride: true,
+                  scaleSteps: steps,
+                  scaleStepWidth: Math.ceil(max / steps),
+                  scaleStartValue: 0,
+                  scaleShowVerticalLines: true,
+                  scaleShowGridLines : true,
+                  barShowStroke : true,
+                  scaleShowLabels: true,
+                  bezierCurve: false,
+                  });
+                  </script>
                     {% endif %}
-                </div>
-                <div class="col-md-4 col-lg-4">
-                    <button type="button" class="btn btn-outline-primary btn-sm"><a href="profile">Edit Weight</a></button>
-                </div>
+
+                  </div>
+                  <div class="col-md-4 col-lg-4">
+                    <button type="button" class="btn btn-outline-primary btn-sm"><a href="profile">Edit Weight</a></button><br><br>
+                    </div>
             </div>
         </div>
         <div class="jumbotron">

@@ -38,38 +38,40 @@
 
         <div class="jumbotron">
         <h2>Personal Info</h2>
-        <a href="edit_profile">Edit</a>
-        <table>
-
-           <tr>
-                <th>Weight</th>
+        <hr class="my-4">
+        <button type="button" class="btn btn-secondary"><a href="edit_profile">Edit</a></button>
+        <table class="table table-hover">
+        <tbody>
+           <tr  class="table-primary">
+                <th scope="row">Weight</th>
                 <td> {{weight}} lbs </td>
            </tr>
-           <tr>
-                <th>Height</th>
+           <tr  class="table-primary">
+                <th scope="row">Height</th>
                 <td> {{height}} </td>
            </tr>
-
+       </tbody>
         </table>
         </div>
 
         <div class="jumbotron">
         <h2>Health Statistics</h2>
-        <table>
-
-           <tr>
-                <th>TDEE</th>
+        <hr class="my-4">
+        <table class="table table-hover">
+        <tbody>
+           <tr  class="table-primary">
+                <th scope="row">TDEE</th>
                 <td> {{tdee}}  </td>
            </tr>
-           <tr>
-                <th>BMR</th>
+           <tr  class="table-primary">
+                <th scope="row">BMR</th>
                 <td> {{bmr}} </td>
            </tr>
-           <tr>
-                <th>BMI</th>
+           <tr  class="table-primary">
+                <th scope="row">BMI</th>
                 <td> {{bmi}} </td>
            </tr>
-
+</tbody>
         </table>
         </div>
 
