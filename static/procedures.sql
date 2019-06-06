@@ -4,6 +4,9 @@ use kaysha;
 Table stuff
 */
 
+/*** alt_workouts
+Input the alternate workout type and time
+*/
 drop table if exists alt_workouts;
 create table alt_workouts (
 user varchar(45) not null,
@@ -13,10 +16,6 @@ type2 varchar(15) not null,
 time2 varchar(10) not null,
 date DATE not null,
 primary key (user, date, type1, type2));
-
-
-
-
 
 
 
@@ -50,6 +49,9 @@ CREATE TABLE tbl_profile (
   PRIMARY KEY (username)
 );
 
+/***tbl_goals
+the user's individual (unique) fitness goals and the weight and calorie goals are here
+*/
 drop table if exists tbl_goals;
 CREATE TABLE `tbl_goals` (
   `username` varchar(45) NOT NULL,
@@ -67,6 +69,9 @@ CREATE TABLE `tbl_goals` (
   CONSTRAINT `tbl_goals_ibfk_1` FOREIGN KEY (`username`) REFERENCES `tbl_user` (`user_username`)
 );
 
+/***motivation
+Motivational quotes
+*/
 drop table if exists motivation;
 CREATE TABLE `motivation` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -74,6 +79,10 @@ CREATE TABLE `motivation` (
   PRIMARY KEY (`id`)
 );
 
+
+/***plans
+A table for every permutation of user goal and day to determine exercise ID
+*/
 drop table if exists plans;
 CREATE TABLE `plans` (
   `goal` varchar(20) NOT NULL,
@@ -82,6 +91,9 @@ CREATE TABLE `plans` (
   PRIMARY KEY (`goal`,`day`)
 );
 
+/***workout_complete
+Helps indicate if the user's workout is complete
+*/
 drop table if exists workout_complete;
 CREATE TABLE `workout_complete` (
   `username` varchar(45) NOT NULL,
@@ -89,6 +101,10 @@ CREATE TABLE `workout_complete` (
   PRIMARY KEY (`username`,`day`)
 );
 
+
+/***exercises
+Every possible exercise here, categorised by ID
+*/
 drop table if exists exercises;
 CREATE TABLE `exercises` (
   `id` bigint(20) NOT NULL,
@@ -98,6 +114,9 @@ CREATE TABLE `exercises` (
 );
 
 
+/***news
+table of articles obtained from fitness blogs
+*/
 drop table if exists news;
 
 CREATE TABLE `news` (
@@ -108,6 +127,9 @@ CREATE TABLE `news` (
   PRIMARY KEY (`id`)
 );
 
+/***food
+Each user's history of food intake in the app
+*/
 drop table if exists food;
 CREATE TABLE `food` (
   `username` varchar(45) NOT NULL,
@@ -118,6 +140,9 @@ CREATE TABLE `food` (
   PRIMARY KEY (`username`,`food_id`,`input_date`)
 );
 
+/***macros
+The user's macro history for today
+*/
 drop table if exists macros;
 CREATE TABLE `macros` (
   `username` varchar(45) NOT NULL,
@@ -129,6 +154,9 @@ CREATE TABLE `macros` (
   PRIMARY KEY (username,today)
 );
 
+/***weight_progress
+The users history of weight changes
+*/
 drop table if exists weight_progress;
 CREATE TABLE `weight_progress` (
   `user` varchar(45) NOT NULL,
@@ -308,11 +336,11 @@ CREATE PROCEDURE `sp_getWorkout`(
     IN _day VARCHAR(20)
 )
 BEGIN
-  select workout, muscle_group, cals from exercises 
-  where id 
-  IN (select max(id) from plans 
+  select workout, muscle_group, cals from exercises
+  where id
+  IN (select max(id) from plans
 	  where day = _day and goal IN ((
-			select weight_goal from tbl_goals 
+			select weight_goal from tbl_goals
 				where username=_username limit 1), "Maintain"));
 END$$
 DELIMITER ;
@@ -373,7 +401,7 @@ p_username: str, username
 bool_list: str, has the list of goals the user wants to acheive (training goal)
 weight: str, weight goal (maintain, lose or gain)
 */
-drop procedure if exists sp_editGoals; 
+drop procedure if exists sp_editGoals;
 delimiter $$
 CREATE PROCEDURE sp_editGoals (
   in p_username varchar(45),
@@ -393,8 +421,8 @@ declare weights boolean default 0;
 set run = if(find_in_set('2',bool_list) <> 0, 1,0);
 set weights = if(find_in_set('1',bool_list) <> 0, 1,0);
 
-UPDATE tbl_goals set 
-lift=weights,run_5k=run,weight_goal=weight_diff,goal_lbs=weight_goal, goal_cals=cals, 
+UPDATE tbl_goals set
+lift=weights,run_5k=run,weight_goal=weight_diff,goal_lbs=weight_goal, goal_cals=cals,
 goal_1=ind_1, goal_2=ind_2, goal_3=ind_3, goal_4=ind_4, goal_5=ind_5
 where username=p_username;
 END $$
@@ -436,6 +464,15 @@ BEGIN
 END$$
 DELIMITER ;
 
+
+/*** sp_getArticle
+Retreieves an article by inputted id
+
+Parameters:
+----
+num: int, the id of the article to get
+
+*/
 DROP PROCEDURE IF EXISTS sp_getArticle;
 DELIMITER $$
 CREATE PROCEDURE `sp_getArticle`(
@@ -447,6 +484,16 @@ END$$
 DELIMITER ;
 
 
+/*** sp_newArticle
+Updates the table with a new article
+
+Parameters:
+----
+a_name: str, the title of the article
+a_author: str, the author
+a_content: text, the article
+
+*/
 DROP PROCEDURE IF EXISTS sp_newArticle;
 DELIMITER $$
 CREATE PROCEDURE `sp_newArticle`(
@@ -459,6 +506,18 @@ BEGIN
 END$$
 DELIMITER ;
 
+/*** sp_addFood
+Updates the food table with foods the user inputted
+
+Parameters:
+----
+_username: str, username
+mfp_id: int, MyFitnessPal's convention for food ids
+today: date, the current date the user is inputting food
+serving: int, the number of servings
+_meal: str, the time of meal (lunch, dinner, breakfast)
+
+*/
 drop procedure if exists sp_addFood;
 delimiter $$
 CREATE  PROCEDURE `sp_addFood`(
@@ -478,6 +537,19 @@ begin
 end $$
 delimiter ;
 
+
+/*** sp_editFood
+Edit the food table per user
+
+Parameters:
+----
+_username: str, username
+mfp_id: int, MyFitnessPal's convention for food ids
+today: date, the current date the user is inputting food
+serving: int, the number of servings
+_meal: str, the time of meal (lunch, dinner, breakfast)
+
+*/
 drop procedure if exists sp_editFood;
 delimiter $$
 CREATE  PROCEDURE `sp_editFood`(
@@ -489,17 +561,29 @@ in serving int
 begin
 	if (serving <= 0)
     then
-		delete from food 
+		delete from food
         where username=_username and input_date=today and food_id=mfp_id;
     else
-		update food 
-        set serving_size =serving 
+		update food
+        set serving_size =serving
         where username=_username and input_date=today and food_id=mfp_id;
 	end if;
 end $$
 delimiter ;
 
 
+/*** sp_updateMacros
+As the user inputs and edits food, update the user's macro count for the day
+
+Parameters:
+----
+_username: str, username
+_today: date, the current date the user is inputting food
+_cals: int, the number of calories
+_protein: int, grams of protein
+_fat: int, grams of fat
+_carb: int, grams of carbs
+*/
 DROP procedure if exists sp_updateMacros;
 delimiter $$
 CREATE PROCEDURE `sp_updateMacros`(
@@ -521,6 +605,13 @@ on duplicate key update
 end $$
 delimiter ;
 
+/*** sp_getMacros
+Get the user's macros
+Parameters:
+----
+_username: str, username
+_today: date, the current date the user is inputting food
+*/
 drop procedure if exists sp_getMacros;
 delimiter $$
 create procedure `sp_getMacros`(
@@ -532,7 +623,14 @@ begin
 end $$
 delimiter ;
 
+/*** sp_getTodayFood
+Get the user's food for the day
 
+Parameters:
+----
+_username: str, username
+_today: date, the current date the user is inputting food
+*/
 drop procedure if exists sp_getTodayFood;
 delimiter $$
 CREATE PROCEDURE `sp_getTodayFood`(
@@ -543,6 +641,14 @@ begin
 end $$
 delimiter ;
 
+
+/*** sp_getWeightProgress
+Return the weight changes of the user
+
+Parameters:
+----
+username: str, username
+*/
 drop procedure if exists sp_getWeightProgress;
 delimiter $$
 CREATE PROCEDURE `sp_getWeightProgress`(
@@ -553,6 +659,13 @@ BEGIN
 END $$
 delimiter ;
 
+/*** sp_getWeight
+Return the weight of the user
+
+Parameters:
+----
+username: str, username
+*/
 drop procedure if exists sp_getWeight;
 delimiter $$
 create procedure `sp_getWeight`(
@@ -592,6 +705,15 @@ BEGIN
 END $$
 delimiter ;
 
+
+/*** sp_getAltWorkouts1
+Return the first alternate workout of the user
+
+Parameters:
+----
+username: str, username
+p_date: date, the current date
+*/
 drop procedure if exists sp_getAltWorkouts1;
 delimiter $$
 create procedure sp_getAltWorkouts1 (
@@ -603,6 +725,14 @@ select type1,time1 from alt_workouts where user=p_username and date=p_date;
 END $$
 delimiter ;
 
+/*** sp_getAltWorkouts2
+Return the second alternate workout of the user
+
+Parameters:
+----
+username: str, username
+p_date: date, the current date
+*/
 drop procedure if exists sp_getAltWorkouts2;
 delimiter $$
 create procedure sp_getAltWorkouts2 (
@@ -614,7 +744,13 @@ select type2,time2 from alt_workouts where user=p_username and date=p_date;
 END $$
 delimiter ;
 
+/*** sp_getIndGoals
+Return the individual/manual goals of the user
 
+Parameters:
+----
+username: str, username
+*/
 drop procedure if exists sp_getIndGoals;
 delimiter $$
 CREATE PROCEDURE sp_getIndGoals (
@@ -626,6 +762,17 @@ from tbl_goals where username=p_username;
 END $$
 delimiter ;
 
+/*** sp_setAltWorkouts
+Updates alternate workouts for the user
+Parameters:
+----
+username: str, username
+p_date: date, the current date
+p_type1: str, type of workout 1
+p_time1: int, duration of workout 1
+p_type2: str, type of workout 2
+p_time1: int, duration of workout 2
+*/
 drop procedure if exists sp_setAltWorkouts;
 delimiter $$
 create procedure sp_setAltWorkouts (
@@ -637,21 +784,9 @@ in p_type2 varchar(15),
 in p_time2 varchar(10)
 )
 begin
-insert into alt_workouts (user, date, type1, time1, type2, time2) 
+insert into alt_workouts (user, date, type1, time1, type2, time2)
 values (p_username, p_date, p_type1, p_time1, p_type2, p_time2);
 END $$
 delimiter ;
 
-DELIMITER $$
-CREATE TRIGGER after_insert_user
-    after insert ON tbl_user
-    FOR EACH ROW 
-BEGIN
-    INSERT INTO tbl_profile
-    (username) values (NEW.user_username);
-    
-    insert into tbl_goals
-    (username) values (NEW.user_username);
-END$$
-DELIMITER ;
 
