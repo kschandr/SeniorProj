@@ -17,6 +17,12 @@ pip install Flask-WTF
 pip install pexpect
 """
 
+
+"""
+----------------------
+Global Variables
+----------------------
+"""
 app = Flask(__name__)
 # To use session dictionary, make sure to have app secret key
 # generated in terminal via: python -c 'import os; print(os.urandom(16))'
@@ -34,39 +40,6 @@ mysql.init_app(app)
 client = ""
 today = date.today().strftime('%Y-%m-%d')
 
-PER_PAGE = 10
-
-class Pagination(object):
-
-		def __init__(self, page, per_page, total_count):
-				self.page = page
-				self.per_page = per_page
-				self.total_count = total_count
-
-		@property
-		def pages(self):
-				return int(ceil(self.total_count / float(self.per_page)))
-
-		@property
-		def has_prev(self):
-				return self.page > 1
-
-		@property
-		def has_next(self):
-				return self.page < self.pages
-
-		def iter_pages(self, left_edge=2, left_current=2,
-									 right_current=5, right_edge=2):
-				last = 0
-				for num in xrange(1, self.pages + 1):
-						if num <= left_edge or \
-							 (num > self.page - left_current - 1 and \
-								num < self.page + right_current) or \
-							 num > self.pages - right_edge:
-								if last + 1 != num:
-										yield None
-								yield num
-								last = num
 
 """
 ------------------------------------
@@ -129,23 +102,34 @@ def login_required(function_to_protect):
 		a_wrapper_accepting_arguments.__name__ = function_to_protect.__name__
 		return a_wrapper_accepting_arguments
 
-
-"""
------------------------------------
-App Main Functions
------------------------------------
-"""
 def getQuotes():
+		""" Pulls a random quote
+		"""
 	_id = random.randint(1,104)
 	data = run_SP(_id, s_proc='sp_getQuote')
 	quote = data[0][0]
 	return quote
 
 def getMacros(food_id,serving=1):
+	"""Gets a food's macro
+
+	Parameters:
+	-----------
+	food_id: int
+		the MyFitnessPal food id
+	"""
 	serving = int(serving)
 	data = client.get_food_item_details(food_id)
 	return (round(data.calories,2)*serving, round(data.protein,2)*serving,
 		round(data.fat,2)*serving, round(data.carbohydrates,2)*serving)
+
+
+
+"""
+-----------------------------------
+App Main Functions
+-----------------------------------
+"""
 
 
 '''
@@ -340,6 +324,9 @@ def searchResults(search):
 
 @app.route('/addFood', methods=['POST'])
 def addFood():
+	"""Add food to the user's food database.
+	Reads input from the food search results page
+	"""
 	foods = request.form.getlist("food_id")
 	servings = request.form.getlist("serving_size")
 	meal = request.form['meal_selected']
@@ -360,6 +347,8 @@ def addFood():
 
 @app.route('/editFood', methods=['GET','POST'])
 def editFood():
+	"""If the user updates the serving size of a food, this method will take care of it
+	"""
 	if request.method == "POST":
 		app.logger.info("gh")
 	foods = request.form.getlist("f")
@@ -462,6 +451,10 @@ def workoutDone():
 @app.route("/update_workouts", methods=['GET','POST'])
 @login_required
 def udpateWorkout():
+	"""
+	The user can specify alternate workouts to those alredy prescribed to them.
+	Options include running, walking and biking
+	"""
 	_user = request.cookies.get("current_user")
 	app.logger.info("in update workout")
 	_w1 = request.form['alt_workout1']
@@ -624,6 +617,9 @@ def updateGoals():
 @app.route("/edit_goals")
 @login_required
 def editGoals():
+	"""
+	The user can update their goal weight and calories here
+	"""
 	user = request.cookies.get("current_user")
 	weights = ["Lose", "Maintain", "Gain"]
 	goals = run_SP(user, s_proc='sp_getIndGoals')
@@ -857,6 +853,10 @@ def signUp():
 
 
 if __name__ == "__main__":
+	"""
+	The main function intiates a MyFitnesspal client to allow query for food data.
+	It also starts running the app in flask.
+	"""
 
 
 		try:
